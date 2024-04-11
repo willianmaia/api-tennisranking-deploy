@@ -128,7 +128,6 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
     const confrontos = db.confrontos;
     let confrontoAtualizado = null;
 
-    // Encontrar o confronto correto pelo ID fornecido
     const confrontoIndex = confrontos.findIndex(confronto => confronto.id === confrontoId);
 
     if (confrontoIndex === -1) {
@@ -136,19 +135,18 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
       return res.status(404).json({ message: 'Confronto não encontrado' });
     }
 
-    // Atualizar o confronto encontrado com o novoConfronto
     db.confrontos[confrontoIndex] = { ...db.confrontos[confrontoIndex], ...novoConfronto };
     confrontoAtualizado = db.confrontos[confrontoIndex];
 
-    // Escreve o arquivo JSON de volta com o confronto atualizado
     fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
     console.log('Confronto atualizado:', confrontoAtualizado);
     res.json(confrontoAtualizado);
   } catch (err) {
-    console.error('Erro ao ler/escrever dados do arquivo JSON:', err);
-    res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto' });
+    console.error('Erro ao atualizar o confronto:', err);
+    res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
   }
 });
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
