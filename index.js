@@ -86,6 +86,38 @@ app.post('/jogadores', authenticate, (req, res) => {
   }
 });
 
+// Rota para obter todos os confrontos (protegida por autenticação)
+app.get('/confrontos', authenticate, (req, res) => {
+  try {
+    const data = fs.readFileSync(dataPath, 'utf8');
+    const confrontos = JSON.parse(data).confrontos;
+    console.log('Confrontos encontrados:', confrontos); // Log dos confrontos encontrados
+    res.json(confrontos);
+  } catch (err) {
+    console.error('Erro ao ler dados do arquivo JSON:', err);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  }
+});
+
+// Rota para obter um confronto específico por ID (protegida por autenticação)
+app.get('/confrontos/:id', authenticate, (req, res) => {
+  const confrontoId = req.params.id;
+  try {
+    const data = fs.readFileSync(dataPath, 'utf8');
+    const confrontos = JSON.parse(data).confrontos;
+    const confronto = confrontos.find((confronto) => confronto.id === confrontoId);
+    if (!confronto) {
+      console.log(`Confronto com ID ${confrontoId} não encontrado`); // Log confronto não encontrado
+      return res.status(404).json({ message: 'Confronto não encontrado' });
+    }
+    console.log('Confronto encontrado:', confronto); // Log do confronto encontrado
+    res.json(confronto);
+  } catch (err) {
+    console.error('Erro ao ler dados do arquivo JSON:', err);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  }
+});
+
 // Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
