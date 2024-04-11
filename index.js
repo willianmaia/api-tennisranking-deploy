@@ -127,20 +127,21 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
     let db = JSON.parse(data);
     const confrontos = db.confrontos;
     let confrontoAtualizado = null;
-    // Procurar o confronto pelo ID e atualizá-lo
-    for (let i = 0; i < confrontos.length; i++) {
-      const confronto = confrontos[i];
+    
+    // Procurar o confronto com o ID correspondente dentro de cada objeto de confronto
+    confrontos.forEach(confronto => {
       if (confronto.hasOwnProperty(confrontoId)) {
         confronto[confrontoId] = { ...confronto[confrontoId], ...novoConfronto };
         confrontoAtualizado = confronto[confrontoId];
-        break;
       }
-    }
+    });
+    
     // Verificar se o confronto foi encontrado e atualizado
     if (!confrontoAtualizado) {
       console.log(`Confronto com ID ${confrontoId} não encontrado`); // Log confronto não encontrado
       return res.status(404).json({ message: 'Confronto não encontrado' });
     }
+    
     // Escreve o arquivo JSON de volta com o confronto atualizado
     fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
     console.log('Confronto atualizado:', confrontoAtualizado); // Log do confronto atualizado
@@ -150,9 +151,6 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
     res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto' });
   }
 });
-
-
-
 
 // Iniciar o servidor
 app.listen(PORT, () => {
