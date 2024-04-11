@@ -4,6 +4,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const atob = require('atob'); // Importe o pacote 'atob'
+const admin = require("./firebaseConfig");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
