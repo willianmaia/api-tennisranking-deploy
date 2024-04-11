@@ -1,0 +1,8 @@
+{
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/jogadores", "dest": "/jogadores" },
+    { "src": "/jogadores/:id", "dest": "/jogadores/:id" },
+    { "src": "/(.*)", "dest": "/" }
+  ]
+}
