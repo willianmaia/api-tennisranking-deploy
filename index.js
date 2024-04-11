@@ -121,39 +121,34 @@ app.get('/confrontos/:id', authenticate, (req, res) => {
 // Rota para atualizar um confronto específico por ID (protegida por autenticação)
 app.put('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
-  const novoConfronto = req.body; // O novo objeto de confronto enviado no corpo da requisição
+  const novoConfronto = req.body;
   try {
     const data = fs.readFileSync(dataPath, 'utf8');
     let db = JSON.parse(data);
     const confrontos = db.confrontos;
     let confrontoAtualizado = null;
 
-    // Iterar sobre todos os confrontos e atualizar aquele que corresponder ao ID fornecido
-    confrontos.forEach(confronto => {
-      Object.keys(confronto).forEach(key => {
-        if (key !== 'id' && confronto[key].hasOwnProperty(confrontoId)) {
-          confronto[key] = { ...confronto[key], ...novoConfronto };
-          confrontoAtualizado = confronto[key];
-        }
-      });
-    });
+    // Encontrar o confronto correto pelo ID fornecido
+    const confrontoIndex = confrontos.findIndex(confronto => confronto.id === confrontoId);
 
-    // Verificar se o confronto foi encontrado e atualizado
-    if (!confrontoAtualizado) {
-      console.log(`Confronto com ID ${confrontoId} não encontrado`); // Log confronto não encontrado
+    if (confrontoIndex === -1) {
+      console.log(`Confronto com ID ${confrontoId} não encontrado`);
       return res.status(404).json({ message: 'Confronto não encontrado' });
     }
 
+    // Atualizar o confronto encontrado com o novoConfronto
+    db.confrontos[confrontoIndex] = { ...db.confrontos[confrontoIndex], ...novoConfronto };
+    confrontoAtualizado = db.confrontos[confrontoIndex];
+
     // Escreve o arquivo JSON de volta com o confronto atualizado
     fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
-    console.log('Confronto atualizado:', confrontoAtualizado); // Log do confronto atualizado
+    console.log('Confronto atualizado:', confrontoAtualizado);
     res.json(confrontoAtualizado);
   } catch (err) {
     console.error('Erro ao ler/escrever dados do arquivo JSON:', err);
     res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto' });
   }
 });
-
 
 // Iniciar o servidor
 app.listen(PORT, () => {
