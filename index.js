@@ -126,26 +126,31 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
     const data = fs.readFileSync(dataPath, 'utf8');
     let db = JSON.parse(data);
     const confrontos = db.confrontos;
-    const confrontoIndex = confrontos.findIndex((confronto) => confronto.id === confrontoId);
-    if (confrontoIndex === -1) {
+    let confrontoAtualizado = null;
+    // Procurar o confronto pelo ID e atualizá-lo
+    for (let i = 0; i < confrontos.length; i++) {
+      const confronto = confrontos[i];
+      if (confronto.hasOwnProperty(confrontoId)) {
+        confronto[confrontoId] = { ...confronto[confrontoId], ...novoConfronto };
+        confrontoAtualizado = confronto[confrontoId];
+        break;
+      }
+    }
+    // Verificar se o confronto foi encontrado e atualizado
+    if (!confrontoAtualizado) {
       console.log(`Confronto com ID ${confrontoId} não encontrado`); // Log confronto não encontrado
       return res.status(404).json({ message: 'Confronto não encontrado' });
     }
-    // Atualiza o confronto no array de confrontos
-    db.confrontos[confrontoIndex] = { ...db.confrontos[confrontoIndex], ...novoConfronto };
     // Escreve o arquivo JSON de volta com o confronto atualizado
     fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
-    console.log('Confronto atualizado:', db.confrontos[confrontoIndex]); // Log do confronto atualizado
-    res.json(db.confrontos[confrontoIndex]);
+    console.log('Confronto atualizado:', confrontoAtualizado); // Log do confronto atualizado
+    res.json(confrontoAtualizado);
   } catch (err) {
     console.error('Erro ao ler/escrever dados do arquivo JSON:', err);
-    if (err instanceof SyntaxError) {
-      return res.status(500).json({ message: 'Erro de formatação JSON no arquivo de dados' });
-    } else {
-      return res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto' });
-    }
+    res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto' });
   }
 });
+
 
 
 
