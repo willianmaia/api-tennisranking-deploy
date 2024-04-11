@@ -139,9 +139,14 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
     res.json(db.confrontos[confrontoIndex]);
   } catch (err) {
     console.error('Erro ao ler/escrever dados do arquivo JSON:', err);
-    res.status(500).json({ message: 'Erro interno do servidor' });
+    if (err instanceof SyntaxError) {
+      return res.status(500).json({ message: 'Erro de formatação JSON no arquivo de dados' });
+    } else {
+      return res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto' });
+    }
   }
 });
+
 
 
 // Iniciar o servidor
