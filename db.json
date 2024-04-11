@@ -1,0 +1,73 @@
+{
+  "jogadores": [
+    {
+      "id": "2555",
+      "nome": "Marcos",
+      "sobrenome": "Santos",
+      "dataNascimento": "01/01/1991"
+    },
+    {
+      "id": "54b3",
+      "nome": "Julia",
+      "sobrenome": "Moraes",
+      "dataNascimento": "10/10/1992"
+    },
+    {
+      "id": "1727",
+      "nome": "Amaury",
+      "sobrenome": "Junior",
+      "dataNascimento": "25/12/1990"
+    },
+    {
+      "id": "6169",
+      "nome": "Fernando",
+      "sobrenome": "Gomes",
+      "dataNascimento": "10/10/1989"
+    },
+    {
+      "id": "5b8a",
+      "nome": "Victor",
+      "sobrenome": "Gulia",
+      "dataNascimento": "01/02/1992"
+    },
+    {
+      "id": "ac0d",
+      "nome": "Willian",
+      "sobrenome": "Maia",
+      "dataNascimento": "20/02/1992"
+    }
+  ],
+  "confrontos": [
+    {
+      "id": "0",
+      "confronto": "Julia Moraes x Victor Gulia",
+      "set1a": "",
+      "set1b": "",
+      "set2a": "",
+      "set2b": "",
+      "tiebreaka": "",
+      "tiebreakb": ""
+    },
+    {
+      "id": "1",
+      "confronto": "Fernando Gomes x Marcos Santos",
+      "set1a": "",
+      "set1b": "",
+      "set2a": "",
+      "set2b": "",
+      "tiebreaka": "",
+      "tiebreakb": ""
+    },
+    {
+      "id": "2",
+      "confronto": "Amaury Junior x Willian Maia",
+      "set1a": "",
+      "set1b": "",
+      "set2a": "",
+      "set2b": "",
+      "tiebreaka": "",
+      "tiebreakb": ""
+    }
+  ],
+  "resultados": []
+}
