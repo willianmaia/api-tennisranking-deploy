@@ -39,34 +39,34 @@
   ],
   "confrontos": [
     {
-      "id": "0",
-      "confronto": "Julia Moraes x Victor Gulia",
-      "set1a": "",
-      "set1b": "",
-      "set2a": "",
-      "set2b": "",
-      "tiebreaka": "",
-      "tiebreakb": ""
-    },
-    {
-      "id": "1",
-      "confronto": "Fernando Gomes x Marcos Santos",
-      "set1a": "",
-      "set1b": "",
-      "set2a": "",
-      "set2b": "",
-      "tiebreaka": "",
-      "tiebreakb": ""
-    },
-    {
-      "id": "2",
-      "confronto": "Amaury Junior x Willian Maia",
-      "set1a": "",
-      "set1b": "",
-      "set2a": "",
-      "set2b": "",
-      "tiebreaka": "",
-      "tiebreakb": ""
+      "0": {
+        "confronto": "Julia Moraes x Victor Gulia",
+        "set1a": "",
+        "set1b": "",
+        "set2a": "",
+        "set2b": "",
+        "tiebreaka": "",
+        "tiebreakb": ""
+      },
+      "1": {
+        "confronto": "Fernando Gomes x Marcos Santos",
+        "set1a": "",
+        "set1b": "",
+        "set2a": "",
+        "set2b": "",
+        "tiebreaka": "",
+        "tiebreakb": ""
+      },
+      "2": {
+        "confronto": "Amaury Junior x Willian Maia",
+        "set1a": "",
+        "set1b": "",
+        "set2a": "",
+        "set2b": "",
+        "tiebreaka": "",
+        "tiebreakb": ""
+      },
+      "id": "0"
     }
   ],
   "resultados": []
