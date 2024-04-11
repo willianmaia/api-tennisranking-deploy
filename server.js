@@ -43,6 +43,7 @@ app.get('/jogadores', authenticate, (req, res) => {
   try {
     const data = fs.readFileSync(dataPath, 'utf8');
     const jogadores = JSON.parse(data).jogadores;
+    console.log('Jogadores encontrados:', jogadores); // Log dos jogadores encontrados
     res.json(jogadores);
   } catch (err) {
     console.error('Erro ao ler dados do arquivo JSON:', err);
@@ -58,8 +59,10 @@ app.get('/jogadores/:id', authenticate, (req, res) => {
     const jogadores = JSON.parse(data).jogadores;
     const jogador = jogadores.find((jogador) => jogador.id === playerId);
     if (!jogador) {
+      console.log(`Jogador com ID ${playerId} não encontrado`); // Log jogador não encontrado
       return res.status(404).json({ message: 'Jogador não encontrado' });
     }
+    console.log('Jogador encontrado:', jogador); // Log do jogador encontrado
     res.json(jogador);
   } catch (err) {
     console.error('Erro ao ler dados do arquivo JSON:', err);
@@ -75,6 +78,7 @@ app.post('/jogadores', authenticate, (req, res) => {
     const db = JSON.parse(data);
     db.jogadores.push(novoJogador);
     fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
+    console.log('Novo jogador adicionado:', novoJogador); // Log do novo jogador adicionado
     res.status(201).json(novoJogador);
   } catch (err) {
     console.error('Erro ao escrever dados no arquivo JSON:', err);
