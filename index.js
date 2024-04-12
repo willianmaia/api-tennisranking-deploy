@@ -148,7 +148,21 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
   });
 });
 
+// Rota para criar um novo confronto (protegida por autenticação)
+app.post('/confrontos', authenticate, (req, res) => {
+  const novoConfronto = req.body;
 
+  const confrontosRef = admin.database().ref('confrontos').push();
+  confrontosRef.set(novoConfronto)
+    .then(() => {
+      console.log('Novo confronto adicionado:', novoConfronto);
+      res.status(201).json(novoConfronto);
+    })
+    .catch((err) => {
+      console.error('Erro ao escrever dados no Realtime Database:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao criar o confronto', error: err });
+    });
+});
 
 
 // Iniciar o servidor
