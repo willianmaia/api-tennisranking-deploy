@@ -120,24 +120,40 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
   const novoConfronto = req.body;
 
-  const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
+  const confrontosRef = admin.database().ref('confrontos');
 
-  // Verificar se novoConfronto é um objeto
+  // Verificar se novoConfronto é um objeto válido
   if (typeof novoConfronto === 'object' && !Array.isArray(novoConfronto)) {
-    confrontoRef.set(novoConfronto)
-      .then(() => {
-        console.log('Confronto atualizado:', novoConfronto);
-        res.json(novoConfronto);
-      })
-      .catch((err) => {
-        console.error('Erro ao atualizar o confronto:', err);
-        res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
+    // Encontrar o confronto com o ID correspondente
+    confrontosRef.child(confrontoId).once('value', (snapshot) => {
+      const confronto = snapshot.val();
+
+      if (!confronto) {
+        return res.status(404).json({ message: `Confronto com ID ${confrontoId} não encontrado` });
+      }
+
+      // Atualizar apenas os campos específicos do confronto
+      Object.keys(novoConfronto).forEach((key) => {
+        confronto[confrontoId][key] = novoConfronto[key];
       });
+
+      // Atualizar o confronto no banco de dados
+      confrontosRef.child(confrontoId).update(confronto[confrontoId])
+        .then(() => {
+          console.log('Confronto atualizado:', confronto[confrontoId]);
+          res.json(confronto[confrontoId]);
+        })
+        .catch((err) => {
+          console.error('Erro ao atualizar o confronto:', err);
+          res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
+        });
+    });
   } else {
     console.error('Erro ao atualizar o confronto: novoConfronto não é um objeto válido');
     res.status(400).json({ message: 'Erro: novoConfronto não é um objeto válido' });
   }
 });
+
 
 
 // Iniciar o servidor
