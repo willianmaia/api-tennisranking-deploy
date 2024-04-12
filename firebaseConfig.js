@@ -1,8 +1,7 @@
-require('dotenv').config(); // Carregar variáveis de ambiente do arquivo .env
+require('dotenv').config();
 
-console.log('TYPE:', process.env.TYPE);
+console.log('Variáveis de Ambiente:', process.env);
 
-console.log('PRIVATE_KEY:', process.env.PRIVATE_KEY);
 
 const admin = require('firebase-admin');
 
