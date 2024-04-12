@@ -120,6 +120,8 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
   const novoConfronto = req.body;
 
+	console.log('Corpo da Requisição:', req.body);
+
   try {
     const data = fs.readFileSync(dataPath, 'utf8');
     const db = JSON.parse(data);
