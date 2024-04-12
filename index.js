@@ -120,37 +120,35 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
   const novoConfronto = req.body;
 
-  const confrontosRef = admin.database().ref('confrontos');
+  try {
+    const data = fs.readFileSync(dataPath, 'utf8');
+    const db = JSON.parse(data);
+    const confrontos = db.confrontos;
 
-  // Verificar se novoConfronto é um objeto válido
-  if (typeof novoConfronto === 'object' && !Array.isArray(novoConfronto)) {
-    // Encontrar o confronto com o ID correspondente
-    confrontosRef.child(confrontoId).once('value', (snapshot) => {
-      const confronto = snapshot.val();
+    // Encontrar o índice do confronto com base no confrontoId
+    const confrontoIndex = confrontos.findIndex((confronto) => confronto.id === confrontoId);
 
-      if (!confronto) {
-        return res.status(404).json({ message: `Confronto com ID ${confrontoId} não encontrado` });
-      }
+    if (confrontoIndex === -1) {
+      // Se o confronto não foi encontrado, retornar um erro
+      console.log(`Confronto com ID ${confrontoId} não encontrado`);
+      return res.status(404).json({ message: 'Confronto não encontrado' });
+    }
 
-      // Atualizar apenas os campos específicos do confronto
-      Object.keys(novoConfronto).forEach((key) => {
-        confronto[confrontoId][key] = novoConfronto[key];
-      });
+    // Atualizar apenas o confronto específico com os novos dados
+    confrontos[confrontoIndex] = {
+      ...confrontos[confrontoIndex],
+      ...novoConfronto
+    };
 
-      // Atualizar o confronto no banco de dados
-      confrontosRef.child(confrontoId).update(confronto[confrontoId])
-        .then(() => {
-          console.log('Confronto atualizado:', confronto[confrontoId]);
-          res.json(confronto[confrontoId]);
-        })
-        .catch((err) => {
-          console.error('Erro ao atualizar o confronto:', err);
-          res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
-        });
-    });
-  } else {
-    console.error('Erro ao atualizar o confronto: novoConfronto não é um objeto válido');
-    res.status(400).json({ message: 'Erro: novoConfronto não é um objeto válido' });
+    // Escrever de volta no arquivo JSON com os confrontos atualizados
+    fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
+
+    // Retornar o confronto atualizado como resposta
+    console.log('Confronto atualizado:', confrontos[confrontoIndex]);
+    res.json(confrontos[confrontoIndex]);
+  } catch (err) {
+    console.error('Erro ao atualizar o confronto:', err);
+    res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
   }
 });
 
