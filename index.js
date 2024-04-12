@@ -84,7 +84,7 @@ app.post('/jogadores', authenticate, (req, res) => {
     });
 });
 
-// Rota para obter todos os confrontos (protegida por autenticação)
+// Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
 app.get('/confrontos', authenticate, (req, res) => {
   const confrontosRef = admin.database().ref('confrontos');
   confrontosRef.once('value', (snapshot) => {
@@ -115,37 +115,38 @@ app.get('/confrontos/:id', authenticate, (req, res) => {
   });
 });
 
-// Rota para atualizar um confronto específico por ID (protegida por autenticação)
-app.put('/confrontos/:id', authenticate, (req, res) => {
-  const confrontoId = req.params.id;
-  const novoConfronto = req.body;
+// Rota para atualizar confrontos para uma determinada rodada (protegida por autenticação)
+app.put('/confrontos/:rodada', authenticate, (req, res) => {
+  const rodada = req.params.rodada;
+  const confrontosAtualizados = req.body;
 
-  const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
-
-  confrontoRef.once('value', (snapshot) => {
-    const confrontoAtual = snapshot.val();
-    if (!confrontoAtual) {
-      return res.status(404).json({ message: 'Confronto não encontrado' });
-    }
-
-    // Atualiza apenas as propriedades do confronto existente com o novoConfronto
-    confrontoRef.update({
-      ...confrontoAtual, // mantém as propriedades existentes do confronto
-      ...novoConfronto    // sobrescreve com as novas propriedades do novoConfronto
-    })
+  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
+  confrontosRef.update(confrontosAtualizados)
     .then(() => {
-      console.log('Confronto atualizado com sucesso');
-      res.json({ ...confrontoAtual, ...novoConfronto });
+      console.log(`Confrontos da rodada ${rodada} atualizados com sucesso:`, confrontosAtualizados);
+      res.json({ message: `Confrontos da rodada ${rodada} atualizados com sucesso` });
     })
     .catch((err) => {
-      console.error('Erro ao atualizar o confronto:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
+      console.error('Erro ao atualizar confrontos:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos', error: err });
     });
-  })
-  .catch((err) => {
-    console.error('Erro ao buscar o confronto:', err);
-    res.status(500).json({ message: 'Erro interno do servidor ao buscar o confronto', error: err });
-  });
+});
+
+// Rota para salvar confrontos para uma determinada rodada (protegida por autenticação)
+app.post('/confrontos/:rodada', authenticate, (req, res) => {
+  const rodada = req.params.rodada;
+  const confrontosASalvar = req.body;
+
+  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
+  confrontosRef.set(confrontosASalvar)
+    .then(() => {
+      console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosASalvar);
+      res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
+    })
+    .catch((err) => {
+      console.error('Erro ao salvar confrontos:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao salvar confrontos', error: err });
+    });
 });
 
 // Rota para criar um novo confronto (protegida por autenticação)
