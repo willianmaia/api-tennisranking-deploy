@@ -122,16 +122,32 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
 
   const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
 
-  confrontoRef.update(novoConfronto)
+  confrontoRef.once('value', (snapshot) => {
+    const confrontoAtual = snapshot.val();
+    if (!confrontoAtual) {
+      return res.status(404).json({ message: 'Confronto não encontrado' });
+    }
+
+    // Atualiza apenas as propriedades do confronto existente com o novoConfronto
+    confrontoRef.update({
+      ...confrontoAtual, // mantém as propriedades existentes do confronto
+      ...novoConfronto    // sobrescreve com as novas propriedades do novoConfronto
+    })
     .then(() => {
-      console.log('Confronto atualizado:', novoConfronto);
-      res.json(novoConfronto);
+      console.log('Confronto atualizado com sucesso');
+      res.json({ ...confrontoAtual, ...novoConfronto });
     })
     .catch((err) => {
       console.error('Erro ao atualizar o confronto:', err);
       res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
     });
+  })
+  .catch((err) => {
+    console.error('Erro ao buscar o confronto:', err);
+    res.status(500).json({ message: 'Erro interno do servidor ao buscar o confronto', error: err });
+  });
 });
+
 
 
 
