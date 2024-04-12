@@ -119,17 +119,26 @@ app.get('/confrontos/:id', authenticate, (req, res) => {
 app.put('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
   const novoConfronto = req.body;
+
   const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
-  confrontoRef.update(novoConfronto)
-    .then(() => {
-      console.log('Confronto atualizado:', novoConfronto);
-      res.json(novoConfronto);
-    })
-    .catch((err) => {
-      console.error('Erro ao atualizar o confronto:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
-    });
+
+  // Verificar se novoConfronto é um objeto
+  if (typeof novoConfronto === 'object' && !Array.isArray(novoConfronto)) {
+    confrontoRef.set(novoConfronto)
+      .then(() => {
+        console.log('Confronto atualizado:', novoConfronto);
+        res.json(novoConfronto);
+      })
+      .catch((err) => {
+        console.error('Erro ao atualizar o confronto:', err);
+        res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
+      });
+  } else {
+    console.error('Erro ao atualizar o confronto: novoConfronto não é um objeto válido');
+    res.status(400).json({ message: 'Erro: novoConfronto não é um objeto válido' });
+  }
 });
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
