@@ -120,38 +120,17 @@ app.put('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
   const novoConfronto = req.body;
 
-	console.log('Corpo da Requisição:', req.body);
+  const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
 
-  try {
-    const data = fs.readFileSync(dataPath, 'utf8');
-    const db = JSON.parse(data);
-    const confrontos = db.confrontos;
-
-    // Encontrar o índice do confronto com base no confrontoId
-    const confrontoIndex = confrontos.findIndex((confronto) => confronto.id === confrontoId);
-
-    if (confrontoIndex === -1) {
-      // Se o confronto não foi encontrado, retornar um erro
-      console.log(`Confronto com ID ${confrontoId} não encontrado`);
-      return res.status(404).json({ message: 'Confronto não encontrado' });
-    }
-
-    // Atualizar apenas o confronto específico com os novos dados
-    confrontos[confrontoIndex] = {
-      ...confrontos[confrontoIndex],
-      ...novoConfronto
-    };
-
-    // Escrever de volta no arquivo JSON com os confrontos atualizados
-    fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
-
-    // Retornar o confronto atualizado como resposta
-    console.log('Confronto atualizado:', confrontos[confrontoIndex]);
-    res.json(confrontos[confrontoIndex]);
-  } catch (err) {
-    console.error('Erro ao atualizar o confronto:', err);
-    res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
-  }
+  confrontoRef.update(novoConfronto)
+    .then(() => {
+      console.log('Confronto atualizado:', novoConfronto);
+      res.json(novoConfronto);
+    })
+    .catch((err) => {
+      console.error('Erro ao atualizar o confronto:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
+    });
 });
 
 
