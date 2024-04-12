@@ -1,4 +1,6 @@
-var admin = require("firebase-admin");
+require('dotenv').config(); // Carregar variáveis de ambiente do arquivo .env
+
+const admin = require('firebase-admin');
 
 // Inicialização do Firebase Admin SDK
 admin.initializeApp({
