@@ -8,7 +8,6 @@ const admin = require("./firebaseConfig");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const dataPath = path.join(__dirname, 'db.json');
 
 // Middleware para tratar o corpo das requisições como JSON
 app.use(bodyParser.json());
@@ -28,7 +27,7 @@ const authenticate = (req, res, next) => {
     return res.status(401).json({ message: 'Formato de Authorization inválido' });
   }
 
-  const decodedAuth = atob(authString);
+  const decodedAuth = Buffer.from(authString, 'base64').toString('ascii');
   const [key, secret] = decodedAuth.split(':');
 
   // Verifica se a chave e o segredo são válidos
@@ -41,113 +40,96 @@ const authenticate = (req, res, next) => {
 
 // Rota para obter todos os jogadores (protegida por autenticação)
 app.get('/jogadores', authenticate, (req, res) => {
-  try {
-    const data = fs.readFileSync(dataPath, 'utf8');
-    const jogadores = JSON.parse(data).jogadores;
-    console.log('Jogadores encontrados:', jogadores); // Log dos jogadores encontrados
+  const jogadoresRef = admin.database().ref('jogadores');
+  jogadoresRef.once('value', (snapshot) => {
+    const jogadores = snapshot.val();
+    console.log('Jogadores encontrados:', jogadores);
     res.json(jogadores);
-  } catch (err) {
-    console.error('Erro ao ler dados do arquivo JSON:', err);
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
     res.status(500).json({ message: 'Erro interno do servidor' });
-  }
+  });
 });
 
 // Rota para obter um jogador específico por ID (protegida por autenticação)
 app.get('/jogadores/:id', authenticate, (req, res) => {
   const playerId = req.params.id;
-  try {
-    const data = fs.readFileSync(dataPath, 'utf8');
-    const jogadores = JSON.parse(data).jogadores;
-    const jogador = jogadores.find((jogador) => jogador.id === playerId);
+  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
+  jogadorRef.once('value', (snapshot) => {
+    const jogador = snapshot.val();
     if (!jogador) {
-      console.log(`Jogador com ID ${playerId} não encontrado`); // Log jogador não encontrado
+      console.log(`Jogador com ID ${playerId} não encontrado`);
       return res.status(404).json({ message: 'Jogador não encontrado' });
     }
-    console.log('Jogador encontrado:', jogador); // Log do jogador encontrado
+    console.log('Jogador encontrado:', jogador);
     res.json(jogador);
-  } catch (err) {
-    console.error('Erro ao ler dados do arquivo JSON:', err);
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
     res.status(500).json({ message: 'Erro interno do servidor' });
-  }
+  });
 });
 
 // Rota para adicionar um novo jogador (protegida por autenticação)
 app.post('/jogadores', authenticate, (req, res) => {
   const novoJogador = req.body;
-  try {
-    const data = fs.readFileSync(dataPath, 'utf8');
-    const db = JSON.parse(data);
-    db.jogadores.push(novoJogador);
-    fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
-    console.log('Novo jogador adicionado:', novoJogador); // Log do novo jogador adicionado
-    res.status(201).json(novoJogador);
-  } catch (err) {
-    console.error('Erro ao escrever dados no arquivo JSON:', err);
-    res.status(500).json({ message: 'Erro interno do servidor' });
-  }
+  const novoJogadorRef = admin.database().ref('jogadores').push();
+  novoJogadorRef.set(novoJogador)
+    .then(() => {
+      console.log('Novo jogador adicionado:', novoJogador);
+      res.status(201).json(novoJogador);
+    })
+    .catch((err) => {
+      console.error('Erro ao escrever dados no Realtime Database:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    });
 });
 
 // Rota para obter todos os confrontos (protegida por autenticação)
 app.get('/confrontos', authenticate, (req, res) => {
-  try {
-    const data = fs.readFileSync(dataPath, 'utf8');
-    const confrontos = JSON.parse(data).confrontos;
-    console.log('Confrontos encontrados:', confrontos); // Log dos confrontos encontrados
+  const confrontosRef = admin.database().ref('confrontos');
+  confrontosRef.once('value', (snapshot) => {
+    const confrontos = snapshot.val();
+    console.log('Confrontos encontrados:', confrontos);
     res.json(confrontos);
-  } catch (err) {
-    console.error('Erro ao ler dados do arquivo JSON:', err);
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
     res.status(500).json({ message: 'Erro interno do servidor' });
-  }
+  });
 });
 
 // Rota para obter um confronto específico por ID (protegida por autenticação)
 app.get('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
-  try {
-    const data = fs.readFileSync(dataPath, 'utf8');
-    const confrontos = JSON.parse(data).confrontos;
-    const confronto = confrontos.find((confronto) => confronto.id === confrontoId);
+  const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
+  confrontoRef.once('value', (snapshot) => {
+    const confronto = snapshot.val();
     if (!confronto) {
-      console.log(`Confronto com ID ${confrontoId} não encontrado`); // Log confronto não encontrado
+      console.log(`Confronto com ID ${confrontoId} não encontrado`);
       return res.status(404).json({ message: 'Confronto não encontrado' });
     }
-    console.log('Confronto encontrado:', confronto); // Log do confronto encontrado
+    console.log('Confronto encontrado:', confronto);
     res.json(confronto);
-  } catch (err) {
-    console.error('Erro ao ler dados do arquivo JSON:', err);
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
     res.status(500).json({ message: 'Erro interno do servidor' });
-  }
+  });
 });
 
 // Rota para atualizar um confronto específico por ID (protegida por autenticação)
 app.put('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
   const novoConfronto = req.body;
-  try {
-    const data = fs.readFileSync(dataPath, 'utf8');
-    let db = JSON.parse(data);
-    const confrontos = db.confrontos;
-    let confrontoAtualizado = null;
-
-    const confrontoIndex = confrontos.findIndex(confronto => confronto.id === confrontoId);
-
-    if (confrontoIndex === -1) {
-      console.log(`Confronto com ID ${confrontoId} não encontrado`);
-      return res.status(404).json({ message: 'Confronto não encontrado' });
-    }
-
-    db.confrontos[confrontoIndex] = { ...db.confrontos[confrontoIndex], ...novoConfronto };
-    confrontoAtualizado = db.confrontos[confrontoIndex];
-
-    fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
-    console.log('Confronto atualizado:', confrontoAtualizado);
-    res.json(confrontoAtualizado);
-  } catch (err) {
-    console.error('Erro ao atualizar o confronto:', err);
-    res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
-  }
+  const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
+  confrontoRef.update(novoConfronto)
+    .then(() => {
+      console.log('Confronto atualizado:', novoConfronto);
+      res.json(novoConfronto);
+    })
+    .catch((err) => {
+      console.error('Erro ao atualizar o confronto:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao atualizar o confronto', error: err });
+    });
 });
-
 
 // Iniciar o servidor
 app.listen(PORT, () => {
