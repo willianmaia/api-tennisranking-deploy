@@ -115,49 +115,23 @@ app.get('/confrontos/:id', authenticate, (req, res) => {
   });
 });
 
-// Rota para salvar confrontos para uma determinada rodada (protegida por autenticação)
+// Rota para atualizar confrontos para uma determinada rodada (protegida por autenticação)
 app.put('/confrontos/:rodada', authenticate, (req, res) => {
   const rodada = req.params.rodada;
   const confrontosAtualizados = req.body;
 
   const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
 
-  // Verifica se há confrontos existentes para a rodada
-  confrontosRef.once('value', (snapshot) => {
-    const confrontosExistentes = snapshot.val();
-
-    if (!confrontosExistentes) {
-      return res.status(404).json({ message: `Confrontos da rodada ${rodada} não encontrados` });
-    }
-
-    // Atualiza cada confronto existente com os novos dados recebidos
-    confrontosAtualizados.forEach((novoConfronto) => {
-      const confrontoExistente = confrontosExistentes.find((c) => c.confronto === novoConfronto.confronto);
-
-      if (confrontoExistente) {
-        confrontoExistente.set1a = novoConfronto.set1a;
-        confrontoExistente.set1b = novoConfronto.set1b;
-        confrontoExistente.set2a = novoConfronto.set2a;
-        confrontoExistente.set2b = novoConfronto.set2b;
-        confrontoExistente.tiebreaka = novoConfronto.tiebreaka;
-        confrontoExistente.tiebreakb = novoConfronto.tiebreakb;
-      }
+  // Atualiza os confrontos existentes com os dados recebidos
+  confrontosRef.set(confrontosAtualizados)
+    .then(() => {
+      console.log(`Confrontos da rodada ${rodada} atualizados com sucesso`);
+      res.status(200).json({ message: `Confrontos da rodada ${rodada} atualizados com sucesso` });
+    })
+    .catch((err) => {
+      console.error('Erro ao atualizar confrontos:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos', error: err });
     });
-
-    // Atualiza os confrontos existentes no Firebase
-    confrontosRef.set(confrontosExistentes)
-      .then(() => {
-        console.log(`Confrontos da rodada ${rodada} atualizados com sucesso`);
-        res.status(200).json({ message: `Confrontos da rodada ${rodada} atualizados com sucesso` });
-      })
-      .catch((err) => {
-        console.error('Erro ao atualizar confrontos:', err);
-        res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos', error: err });
-      });
-  }).catch((err) => {
-    console.error('Erro ao ler dados do Realtime Database:', err);
-    res.status(500).json({ message: 'Erro interno do servidor ao ler confrontos existentes', error: err });
-  });
 });
 
 
