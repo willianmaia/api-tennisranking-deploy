@@ -72,18 +72,51 @@ app.get('/jogadores/:id', authenticate, (req, res) => {
 // Rota para adicionar um novo jogador (protegida por autenticação)
 app.post('/jogadores', authenticate, (req, res) => {
   const novoJogador = req.body;
-  const jogadorId = novoJogador.id;
-  const novoJogadorRef = admin.database().ref('jogadores').push();
-  novoJogadorRef.set(novoJogador)
-    .then(() => {
-      console.log('Novo jogador adicionado:', novoJogador);
-      res.status(201).json(novoJogador);
-    })
-    .catch((err) => {
-      console.error('Erro ao escrever dados no Realtime Database:', err);
+
+  // Obtém a próxima ID sequencial
+  admin.database().ref('proximoId').transaction((currentValue) => {
+    return (currentValue || 0) + 1;
+  }, (error, committed, snapshot) => {
+    if (error) {
+      console.error('Erro ao obter próxima ID:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
-    });
+    } else if (committed) {
+      // Atribui a próxima ID sequencial ao novo jogador
+      novoJogador.id = snapshot.val();
+
+      // Adiciona o novo jogador ao banco de dados com a ID sequencial
+      const jogadoresRef = admin.database().ref('jogadores');
+
+      // Obtém a lista de jogadores existentes
+      jogadoresRef.once('value')
+        .then(snapshot => {
+          const jogadores = snapshot.val() || []; // Se não houver jogadores, começa com um array vazio
+          
+          // Adiciona o novo jogador à lista de jogadores
+          jogadores.push(novoJogador);
+
+          // Salva a lista atualizada de jogadores de volta no banco de dados
+          jogadoresRef.set(jogadores)
+            .then(() => {
+              console.log('Novo jogador adicionado:', novoJogador);
+              res.status(201).json(novoJogador);
+            })
+            .catch((err) => {
+              console.error('Erro ao escrever dados no Realtime Database:', err);
+              res.status(500).json({ message: 'Erro interno do servidor' });
+            });
+        })
+        .catch(err => {
+          console.error('Erro ao obter jogadores existentes:', err);
+          res.status(500).json({ message: 'Erro interno do servidor' });
+        });
+    } else {
+      console.error('Falha ao obter próxima ID sequencial');
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
 });
+
 
 // Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
 app.get('/confrontos', authenticate, (req, res) => {
