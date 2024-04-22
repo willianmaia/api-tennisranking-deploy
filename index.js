@@ -117,6 +117,34 @@ app.post('/jogadores', authenticate, (req, res) => {
   });
 });
 
+// Rota para excluir um jogador específico por ID (protegida por autenticação)
+app.delete('/jogadores/:id', authenticate, (req, res) => {
+  const playerId = req.params.id;
+  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
+
+  // Verifica se o jogador existe antes de excluí-lo
+  jogadorRef.once('value', (snapshot) => {
+    const jogador = snapshot.val();
+    if (!jogador) {
+      console.log(`Jogador com ID ${playerId} não encontrado`);
+      return res.status(404).json({ message: 'Jogador não encontrado' });
+    }
+
+    // Remove o jogador do banco de dados
+    jogadorRef.remove()
+      .then(() => {
+        console.log(`Jogador com ID ${playerId} excluído com sucesso`);
+        res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
+      })
+      .catch((err) => {
+        console.error(`Erro ao excluir jogador com ID ${playerId}:`, err);
+        res.status(500).json({ message: 'Erro interno do servidor ao excluir jogador', error: err });
+      });
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
+    res.status(500).json({ message: 'Erro interno do servidor', error: err });
+  });
+});
 
 // Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
 app.get('/confrontos', authenticate, (req, res) => {
