@@ -69,11 +69,10 @@ app.get('/jogadores/:id', authenticate, (req, res) => {
   });
 });
 
-// Rota para adicionar um novo jogador (protegida por autenticação)
 app.post('/jogadores', authenticate, (req, res) => {
   const novoJogador = req.body;
 
-  // Obtém a próxima ID sequencial
+  // Obtém a próxima ID sequencial como string
   admin.database().ref('proximoId').transaction((currentValue) => {
     return (currentValue || 0) + 1;
   }, (error, committed, snapshot) => {
@@ -81,8 +80,11 @@ app.post('/jogadores', authenticate, (req, res) => {
       console.error('Erro ao obter próxima ID:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     } else if (committed) {
-      // Atribui a próxima ID sequencial ao novo jogador
-      novoJogador.id = snapshot.val();
+      // Converte a próxima ID sequencial para uma string
+      const proximaIdString = String(snapshot.val());
+
+      // Atribui a próxima ID sequencial como string ao novo jogador
+      novoJogador.id = proximaIdString;
 
       // Adiciona o novo jogador ao banco de dados com a ID sequencial
       const jogadoresRef = admin.database().ref('jogadores');
@@ -116,6 +118,7 @@ app.post('/jogadores', authenticate, (req, res) => {
     }
   });
 });
+
 
 // Rota para excluir um jogador específico por ID (protegida por autenticação)
 app.delete('/jogadores/:id', authenticate, (req, res) => {
