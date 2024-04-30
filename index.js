@@ -264,15 +264,18 @@ app.post('/updateUserData', authenticate, (req, res) => {
 app.post('/createUser', authenticate, (req, res) => {
   const { nome, sobrenome, email, password, papel, rankings } = req.body;
 
-  // Verificar se o email já está cadastrado na Realtime Database
-  admin.database().ref(`/usuarios/${email}`).once('value')
+  // Substituir caracteres inválidos no e-mail para usá-lo como chave
+  const sanitizedEmail = email.replace(/\./g, ',').replace(/@/g, '_');
+
+  // Verificar se o e-mail já está cadastrado na Realtime Database
+  admin.database().ref(`/usuarios/${sanitizedEmail}`).once('value')
     .then((snapshot) => {
       if (snapshot.exists()) {
         // Se o email já existe na base, enviar resposta indicando que o email já está cadastrado
         res.status(400).send("O email já está cadastrado");
       } else {
         // Se o email não existe na base, criar um novo usuário
-        admin.database().ref(`/usuarios/${email}`).set({
+        admin.database().ref(`/usuarios/${sanitizedEmail}`).set({
           nome: nome,
           sobrenome: sobrenome,
           email: email,
@@ -294,6 +297,7 @@ app.post('/createUser', authenticate, (req, res) => {
       res.status(500).send("Erro ao verificar email na base de dados: " + error.message);
     });
 });
+
 
 
 // Rota para login (protegida por autenticação)
