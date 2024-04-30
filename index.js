@@ -257,39 +257,26 @@ app.post('/updateUserPassword', authenticate, (req, res) => {
 });
 
 
-// Rota para criar um usuario novo (protegida por autenticação)
+// Rota para criar um novo usuário na Realtime Database
 app.post('/createUser', authenticate, (req, res) => {
   const { nome, sobrenome, email, password, papel } = req.body;
 
-  admin.auth().createUser({
+  // Salvar informações do usuário na Realtime Database
+  admin.database().ref('/usuarios').push({
+    nome: nome,
+    sobrenome: sobrenome,
     email: email,
-    password: password
+    password: password, // Incluindo a senha aqui
+    papel: papel,
+    rankings: [] // Lista de rankings vazia para cada novo usuário
   })
-    .then((userRecord) => {
-      // Novo usuário criado com sucesso no Firebase Authentication
-      const userId = userRecord.uid;
-
-      // Salvar informações adicionais no Realtime Database
-      admin.database().ref(`/usuarios/${userId}`).set({
-        nome: nome,
-		password: password,
-        sobrenome: sobrenome,
-        email: email,
-        papel: papel
-      });
-
-      res.status(200).send("Novo usuário criado com sucesso");
-    })
-    .catch((error) => {
-      // Tratar erros de criação de usuário no Firebase Authentication
-      let errorMessage = "Erro ao criar novo usuário";
-      if (error.code === 'auth/email-already-exists') {
-        errorMessage = "O email já está sendo usado por outra conta";
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = "A senha é muito fraca";
-      }
-      res.status(400).send(errorMessage);
-    });
+  .then(() => {
+    res.status(200).send("Novo usuário criado com sucesso na Realtime Database");
+  })
+  .catch((error) => {
+    // Tratar erros de criação de usuário na Realtime Database
+    res.status(400).send("Erro ao criar novo usuário na Realtime Database: " + error.message);
+  });
 });
 
 
