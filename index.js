@@ -259,7 +259,7 @@ app.post('/updateUserPassword', authenticate, (req, res) => {
 
 // Rota para criar um novo usuário na Realtime Database
 app.post('/createUser', authenticate, (req, res) => {
-  const { nome, sobrenome, email, password, papel } = req.body;
+  const { nome, sobrenome, email, password, papel, rankings } = req.body;
 
   // Salvar informações do usuário na Realtime Database
   admin.database().ref('/usuarios').push({
@@ -268,7 +268,7 @@ app.post('/createUser', authenticate, (req, res) => {
     email: email,
     password: password, // Incluindo a senha aqui
     papel: papel,
-    rankings: [] // Lista de rankings vazia para cada novo usuário
+    rankings: rankings || [] // Lista de rankings, se fornecida, ou uma lista vazia
   })
   .then(() => {
     res.status(200).send("Novo usuário criado com sucesso na Realtime Database");
@@ -278,6 +278,7 @@ app.post('/createUser', authenticate, (req, res) => {
     res.status(400).send("Erro ao criar novo usuário na Realtime Database: " + error.message);
   });
 });
+
 
 
 // Rota para login (protegida por autenticação)
