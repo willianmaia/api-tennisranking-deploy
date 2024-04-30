@@ -259,11 +259,11 @@ app.post('/updateUserPassword', authenticate, (req, res) => {
 
 // Rota para criar um usuario novo (protegida por autenticação)
 app.post('/createUser', authenticate, (req, res) => {
-  const { nome, sobrenome, email, senha, papel } = req.body;
+  const { nome, sobrenome, email, password, papel } = req.body;
 
   admin.auth().createUser({
     email: email,
-    password: senha
+    password: password
   })
     .then((userRecord) => {
       // Novo usuário criado com sucesso no Firebase Authentication
@@ -272,6 +272,7 @@ app.post('/createUser', authenticate, (req, res) => {
       // Salvar informações adicionais no Realtime Database
       admin.database().ref(`/usuarios/${userId}`).set({
         nome: nome,
+		password: password,
         sobrenome: sobrenome,
         email: email,
         papel: papel
