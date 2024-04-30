@@ -294,7 +294,7 @@ app.post('/createUser', authenticate, (req, res) => {
     .then((snapshot) => {
       if (snapshot.exists()) {
         // Se o email já existe na base, enviar resposta indicando que o email já está cadastrado
-        res.status(400).send("O email já está cadastrado");
+        res.status(400).json({ message: "O email já está cadastrado" });
       } else {
         // Se o email não existe na base, criar um novo usuário
         admin.database().ref(`/usuarios/${sanitizedEmail}`).set({
@@ -306,19 +306,20 @@ app.post('/createUser', authenticate, (req, res) => {
           rankings: rankings || [] // Lista de rankings, se fornecida, ou uma lista vazia
         })
         .then(() => {
-          res.status(200).send("Novo usuário criado com sucesso na Realtime Database");
+          res.status(200).json({ message: "Novo usuário criado com sucesso na Realtime Database" });
         })
         .catch((error) => {
           // Tratar erros de criação de usuário na Realtime Database
-          res.status(400).send("Erro ao criar novo usuário na Realtime Database: " + error.message);
+          res.status(400).json({ message: "Erro ao criar novo usuário na Realtime Database: " + error.message });
         });
       }
     })
     .catch((error) => {
       // Tratar erros de consulta ao banco de dados
-      res.status(500).send("Erro ao verificar email na base de dados: " + error.message);
+      res.status(500).json({ message: "Erro ao verificar email na base de dados: " + error.message });
     });
 });
+
 
 // Rota para login (protegida por autenticação)
 app.post('/login', authenticate, (req, res) => {
