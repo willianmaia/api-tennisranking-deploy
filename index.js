@@ -261,23 +261,37 @@ app.post('/updateUserPassword', authenticate, (req, res) => {
 app.post('/createUser', authenticate, (req, res) => {
   const { nome, sobrenome, email, password, papel, rankings } = req.body;
 
-  // Salvar informações do usuário na Realtime Database
-  admin.database().ref('/usuarios').push({
-    nome: nome,
-    sobrenome: sobrenome,
-    email: email,
-    password: password, // Incluindo a senha aqui
-    papel: papel,
-    rankings: rankings || [] // Lista de rankings, se fornecida, ou uma lista vazia
-  })
-  .then(() => {
-    res.status(200).send("Novo usuário criado com sucesso na Realtime Database");
-  })
-  .catch((error) => {
-    // Tratar erros de criação de usuário na Realtime Database
-    res.status(400).send("Erro ao criar novo usuário na Realtime Database: " + error.message);
-  });
+  // Verificar se o email já está cadastrado na Realtime Database
+  admin.database().ref('/usuarios').orderByChild('email').equalTo(email).once('value')
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        // Se o email já existe na base, enviar resposta indicando que o email já está cadastrado
+        res.status(400).send("O email já está cadastrado");
+      } else {
+        // Se o email não existe na base, criar um novo usuário
+        admin.database().ref('/usuarios').push({
+          nome: nome,
+          sobrenome: sobrenome,
+          email: email,
+          password: password, // Incluindo a senha aqui
+          papel: papel,
+          rankings: rankings || [] // Lista de rankings, se fornecida, ou uma lista vazia
+        })
+        .then(() => {
+          res.status(200).send("Novo usuário criado com sucesso na Realtime Database");
+        })
+        .catch((error) => {
+          // Tratar erros de criação de usuário na Realtime Database
+          res.status(400).send("Erro ao criar novo usuário na Realtime Database: " + error.message);
+        });
+      }
+    })
+    .catch((error) => {
+      // Tratar erros de consulta ao banco de dados
+      res.status(500).send("Erro ao verificar email na base de dados: " + error.message);
+    });
 });
+
 
 
 
