@@ -241,11 +241,11 @@ app.post('/updateUserPassword', authenticate, (req, res) => {
     password: newPassword
   })
     .then((userRecord) => {
-      // Senha do usuário atualizada com sucesso
+      // Senha do usuário atualizada com sucesso no Firebase Authentication
       res.status(200).send("Senha atualizada com sucesso");
     })
     .catch((error) => {
-      // Tratar erros de atualização de senha
+      // Tratar erros de atualização de senha no Firebase Authentication
       let errorMessage = "Erro ao atualizar senha do usuário";
       if (error.code === 'auth/user-not-found') {
         errorMessage = "Usuário não encontrado";
@@ -256,20 +256,31 @@ app.post('/updateUserPassword', authenticate, (req, res) => {
     });
 });
 
+
 // Rota para criar um usuario novo (protegida por autenticação)
 app.post('/createUser', authenticate, (req, res) => {
-  const { email, password } = req.body;
+  const { nome, sobrenome, email, senha, papel } = req.body;
 
   admin.auth().createUser({
     email: email,
-    password: password
+    password: senha
   })
     .then((userRecord) => {
-      // Novo usuário criado com sucesso
+      // Novo usuário criado com sucesso no Firebase Authentication
+      const userId = userRecord.uid;
+
+      // Salvar informações adicionais no Realtime Database
+      admin.database().ref(`/usuarios/${userId}`).set({
+        nome: nome,
+        sobrenome: sobrenome,
+        email: email,
+        papel: papel
+      });
+
       res.status(200).send("Novo usuário criado com sucesso");
     })
     .catch((error) => {
-      // Tratar erros de criação de usuário
+      // Tratar erros de criação de usuário no Firebase Authentication
       let errorMessage = "Erro ao criar novo usuário";
       if (error.code === 'auth/email-already-exists') {
         errorMessage = "O email já está sendo usado por outra conta";
@@ -279,6 +290,7 @@ app.post('/createUser', authenticate, (req, res) => {
       res.status(400).send(errorMessage);
     });
 });
+
 
 // Rota para login (protegida por autenticação)
 app.post('/login', authenticate, (req, res) => {
