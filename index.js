@@ -320,7 +320,6 @@ app.post('/createUser', authenticate, (req, res) => {
     });
 });
 
-
 // Rota para login (protegida por autenticação)
 app.post('/login', authenticate, (req, res) => {
   const { email, password } = req.body;
@@ -330,7 +329,7 @@ app.post('/login', authenticate, (req, res) => {
 
   // Verificar se o e-mail foi fornecido na solicitação
   if (!email || !password) {
-    return res.status(400).send("E-mail e senha são obrigatórios");
+    return res.status(400).json({ error: "E-mail e senha são obrigatórios" });
   }
 
   // Verificar se o e-mail e a senha estão corretos
@@ -342,24 +341,21 @@ app.post('/login', authenticate, (req, res) => {
         // Verificar se a senha corresponde à senha armazenada na base de dados
         if (userData.password === password) {
           // Senha correta, login bem-sucedido
-          res.status(200).send("Login bem-sucedido");
+          res.status(200).json({ message: "Login bem-sucedido" });
         } else {
           // Senha incorreta
-          res.status(400).send("Credenciais inválidas");
+          res.status(400).json({ error: "Credenciais inválidas" });
         }
       } else {
         // Usuário não encontrado
-        res.status(400).send("Usuário não encontrado");
+        res.status(400).json({ error: "Usuário não encontrado" });
       }
     })
     .catch((error) => {
       // Tratar erros de consulta ao banco de dados
-      res.status(500).send("Erro ao verificar dados do usuário na base de dados: " + error.message);
+      res.status(500).json({ error: "Erro ao verificar dados do usuário na base de dados: " + error.message });
     });
 });
-
-
-
 
 // Iniciar o servidor
 app.listen(PORT, () => {
