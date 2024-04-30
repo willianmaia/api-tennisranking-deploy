@@ -233,27 +233,30 @@ app.post('/confrontos', authenticate, (req, res) => {
     });
 });
 
-// Rota para atualizar senha de um usuario (protegida por autenticação)
-app.post('/updateUserPassword', authenticate, (req, res) => {
-  const { userId, newPassword } = req.body;
+// Rota para atualizar dados de um usuário (protegida por autenticação)
+app.post('/updateUserData', authenticate, (req, res) => {
+  const { userId, nome, sobrenome, password, papel, rankings } = req.body;
 
-  admin.auth().updateUser(userId, {
-    password: newPassword
+  // Primeiro, verifique se o userId foi fornecido na solicitação
+  if (!userId) {
+    return res.status(400).send("ID do usuário não fornecido");
+  }
+
+  // Atualize os dados do usuário na Realtime Database
+  admin.database().ref(`/usuarios/${userId}`).update({
+    nome: nome,
+    sobrenome: sobrenome,
+    password: password, // Atualizar a senha se necessário
+    papel: papel,
+    rankings: rankings || [] // Atualizar a lista de rankings, se fornecida
   })
-    .then((userRecord) => {
-      // Senha do usuário atualizada com sucesso no Firebase Authentication
-      res.status(200).send("Senha atualizada com sucesso");
-    })
-    .catch((error) => {
-      // Tratar erros de atualização de senha no Firebase Authentication
-      let errorMessage = "Erro ao atualizar senha do usuário";
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = "Usuário não encontrado";
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = "A senha é muito fraca";
-      }
-      res.status(400).send(errorMessage);
-    });
+  .then(() => {
+    res.status(200).send("Dados do usuário atualizados com sucesso");
+  })
+  .catch((error) => {
+    // Tratar erros de atualização de dados do usuário na Realtime Database
+    res.status(400).send("Erro ao atualizar dados do usuário na Realtime Database: " + error.message);
+  });
 });
 
 
@@ -262,14 +265,14 @@ app.post('/createUser', authenticate, (req, res) => {
   const { nome, sobrenome, email, password, papel, rankings } = req.body;
 
   // Verificar se o email já está cadastrado na Realtime Database
-  admin.database().ref('/usuarios').orderByChild('email').equalTo(email).once('value')
+  admin.database().ref(`/usuarios/${email}`).once('value')
     .then((snapshot) => {
       if (snapshot.exists()) {
         // Se o email já existe na base, enviar resposta indicando que o email já está cadastrado
         res.status(400).send("O email já está cadastrado");
       } else {
         // Se o email não existe na base, criar um novo usuário
-        admin.database().ref('/usuarios').push({
+        admin.database().ref(`/usuarios/${email}`).set({
           nome: nome,
           sobrenome: sobrenome,
           email: email,
@@ -291,8 +294,6 @@ app.post('/createUser', authenticate, (req, res) => {
       res.status(500).send("Erro ao verificar email na base de dados: " + error.message);
     });
 });
-
-
 
 
 // Rota para login (protegida por autenticação)
