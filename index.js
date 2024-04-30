@@ -233,6 +233,73 @@ app.post('/confrontos', authenticate, (req, res) => {
     });
 });
 
+// Rota para atualizar senha de um usuario (protegida por autenticação)
+app.post('/updateUserPassword', authenticate, (req, res) => {
+  const { userId, newPassword } = req.body;
+
+  admin.auth().updateUser(userId, {
+    password: newPassword
+  })
+    .then((userRecord) => {
+      // Senha do usuário atualizada com sucesso
+      res.status(200).send("Senha atualizada com sucesso");
+    })
+    .catch((error) => {
+      // Tratar erros de atualização de senha
+      let errorMessage = "Erro ao atualizar senha do usuário";
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = "Usuário não encontrado";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "A senha é muito fraca";
+      }
+      res.status(400).send(errorMessage);
+    });
+});
+
+// Rota para criar um usuario novo (protegida por autenticação)
+app.post('/createUser', authenticate, (req, res) => {
+  const { email, password } = req.body;
+
+  admin.auth().createUser({
+    email: email,
+    password: password
+  })
+    .then((userRecord) => {
+      // Novo usuário criado com sucesso
+      res.status(200).send("Novo usuário criado com sucesso");
+    })
+    .catch((error) => {
+      // Tratar erros de criação de usuário
+      let errorMessage = "Erro ao criar novo usuário";
+      if (error.code === 'auth/email-already-exists') {
+        errorMessage = "O email já está sendo usado por outra conta";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "A senha é muito fraca";
+      }
+      res.status(400).send(errorMessage);
+    });
+});
+
+// Rota para login (protegida por autenticação)
+app.post('/login', authenticate, (req, res) => {
+  const { email, password } = req.body;
+
+  admin.auth().signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      // Login bem-sucedido
+      res.status(200).send("Login bem-sucedido");
+    })
+    .catch((error) => {
+      // Tratar erros de login
+      let errorMessage = "Erro ao fazer login";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = "Credenciais inválidas";
+      }
+      res.status(400).send(errorMessage);
+    });
+});
+
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
