@@ -235,29 +235,51 @@ app.post('/confrontos', authenticate, (req, res) => {
 
 // Rota para atualizar dados de um usuário (protegida por autenticação)
 app.post('/updateUserData', authenticate, (req, res) => {
-  const { userId, nome, sobrenome, password, papel, rankings } = req.body;
+  const { email, nome, sobrenome, password, papel, rankings } = req.body;
 
-  // Primeiro, verifique se o userId foi fornecido na solicitação
-  if (!userId) {
-    return res.status(400).send("ID do usuário não fornecido");
+  // Substituir caracteres inválidos no e-mail para usá-lo como chave
+  const sanitizedEmail = email.replace(/\./g, ',').replace(/@/g, '_');
+
+  // Verificar se o e-mail foi fornecido na solicitação
+  if (!email) {
+    return res.status(400).send("E-mail do usuário não fornecido");
   }
 
-  // Atualize os dados do usuário na Realtime Database
-  admin.database().ref(`/usuarios/${userId}`).update({
-    nome: nome,
-    sobrenome: sobrenome,
-    password: password, // Atualizar a senha se necessário
-    papel: papel,
-    rankings: rankings || [] // Atualizar a lista de rankings, se fornecida
-  })
-  .then(() => {
-    res.status(200).send("Dados do usuário atualizados com sucesso");
-  })
-  .catch((error) => {
-    // Tratar erros de atualização de dados do usuário na Realtime Database
-    res.status(400).send("Erro ao atualizar dados do usuário na Realtime Database: " + error.message);
-  });
+  // Atualizar os dados do usuário na Realtime Database
+  admin.database().ref(`/usuarios/${sanitizedEmail}`).once('value')
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        // Obtenha os dados atuais do usuário
+        const userData = snapshot.val();
+
+        // Atualize os campos necessários
+        const updatedData = {
+          nome: nome || userData.nome,
+          sobrenome: sobrenome || userData.sobrenome,
+          password: password || userData.password,
+          papel: papel || userData.papel,
+          rankings: rankings || userData.rankings
+        };
+
+        // Atualize os dados do usuário na Realtime Database
+        admin.database().ref(`/usuarios/${sanitizedEmail}`).update(updatedData)
+          .then(() => {
+            res.status(200).send("Dados do usuário atualizados com sucesso");
+          })
+          .catch((error) => {
+            // Tratar erros de atualização de dados do usuário na Realtime Database
+            res.status(400).send("Erro ao atualizar dados do usuário na Realtime Database: " + error.message);
+          });
+      } else {
+        res.status(404).send("Usuário não encontrado");
+      }
+    })
+    .catch((error) => {
+      // Tratar erros de consulta ao banco de dados
+      res.status(500).send("Erro ao verificar dados do usuário na base de dados: " + error.message);
+    });
 });
+
 
 
 // Rota para criar um novo usuário na Realtime Database
