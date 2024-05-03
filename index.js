@@ -137,6 +137,18 @@ app.delete('/jogadores/:id', authenticate, (req, res) => {
     jogadorRef.remove()
       .then(() => {
         console.log(`Jogador com ID ${playerId} excluído com sucesso`);
+
+        // Após a exclusão, remova o jogador do array de jogadores
+        const jogadoresRef = admin.database().ref('jogadores');
+        jogadoresRef.once('value', (snapshot) => {
+          const jogadores = snapshot.val();
+          const index = jogadores.findIndex(jogador => jogador && jogador.id === playerId);
+          if (index !== -1) {
+            jogadores.splice(index, 1); // Remove o jogador da matriz
+            jogadoresRef.set(jogadores); // Atualiza o array de jogadores no banco de dados
+          }
+        });
+
         res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
       })
       .catch((err) => {
@@ -148,6 +160,7 @@ app.delete('/jogadores/:id', authenticate, (req, res) => {
     res.status(500).json({ message: 'Erro interno do servidor', error: err });
   });
 });
+
 
 // Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
 app.get('/confrontos', authenticate, (req, res) => {
