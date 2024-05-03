@@ -123,28 +123,26 @@ app.post('/jogadores', authenticate, (req, res) => {
 // Rota para excluir um jogador específico por ID (protegida por autenticação)
 app.delete('/jogadores/:id', authenticate, (req, res) => {
   const playerId = req.params.id;
-  const jogadorRef = admin.database().ref(`jogadores`);
+  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
 
   // Verifica se o jogador existe antes de excluí-lo
   jogadorRef.once('value', (snapshot) => {
-    const jogadores = snapshot.val();
-    if (!jogadores || !jogadores[playerId]) {
+    const jogador = snapshot.val();
+    if (!jogador) {
       console.log(`Jogador com ID ${playerId} não encontrado`);
       return res.status(404).json({ message: 'Jogador não encontrado' });
     }
 
-    // Remove o jogador do array
-    const index = jogadores.findIndex(jogador => jogador.id === playerId);
-    if (index !== -1) {
-      jogadores.splice(index, 1);
-    }
-
-    // Atualiza o array de jogadores no banco de dados
-    jogadorRef.set(jogadores)
+    // Remove o jogador do banco de dados
+    jogadorRef.remove()
       .then(() => {
         console.log(`Jogador com ID ${playerId} excluído com sucesso`);
-        res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
+		// Remove a referência do jogador do banco de dados
+		return admin.database().ref(`jogadores`).child(playerId).remove();
       })
+	  .then(() => {
+		res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
+	  })
       .catch((err) => {
         console.error(`Erro ao excluir jogador com ID ${playerId}:`, err);
         res.status(500).json({ message: 'Erro interno do servidor ao excluir jogador', error: err });
@@ -154,7 +152,6 @@ app.delete('/jogadores/:id', authenticate, (req, res) => {
     res.status(500).json({ message: 'Erro interno do servidor', error: err });
   });
 });
-
 
 // Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
 app.get('/confrontos', authenticate, (req, res) => {
