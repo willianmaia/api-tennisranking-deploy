@@ -120,45 +120,40 @@ app.post('/jogadores', authenticate, (req, res) => {
 });
 
 
-// Rota para excluir um jogador específico por ID (protegida por autenticação)
 app.delete('/jogadores/:id', authenticate, (req, res) => {
   const playerId = req.params.id;
   const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
 
-  // Verifica se o jogador existe antes de excluí-lo
-  jogadorRef.once('value', (snapshot) => {
-    const jogador = snapshot.val();
-    if (!jogador) {
-      console.log(`Jogador com ID ${playerId} não encontrado`);
-      return res.status(404).json({ message: 'Jogador não encontrado' });
-    }
+  // Remove o jogador do banco de dados
+  jogadorRef.remove()
+    .then(() => {
+      console.log(`Jogador com ID ${playerId} excluído com sucesso`);
 
-    // Remove o jogador do banco de dados
-    jogadorRef.remove()
-      .then(() => {
-        console.log(`Jogador com ID ${playerId} excluído com sucesso`);
-
-        // Após a exclusão, remova o jogador do array de jogadores
-        const jogadoresRef = admin.database().ref('jogadores');
-        jogadoresRef.once('value', (snapshot) => {
-          const jogadores = snapshot.val();
-          const index = jogadores.findIndex(jogador => jogador && jogador.id === playerId);
-          if (index !== -1) {
-            jogadores.splice(index, 1); // Remove o jogador da matriz
-            jogadoresRef.set(jogadores); // Atualiza o array de jogadores no banco de dados
-          }
-        });
-
-        res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
-      })
-      .catch((err) => {
-        console.error(`Erro ao excluir jogador com ID ${playerId}:`, err);
-        res.status(500).json({ message: 'Erro interno do servidor ao excluir jogador', error: err });
+      // Após a exclusão, remova o jogador do array de jogadores
+      const jogadoresRef = admin.database().ref('jogadores');
+      jogadoresRef.once('value', (snapshot) => {
+        const jogadores = snapshot.val();
+        if (jogadores && Array.isArray(jogadores)) {
+          const novoArrayJogadores = jogadores.filter(jogador => jogador && jogador.id !== playerId);
+          jogadoresRef.set(novoArrayJogadores)
+            .then(() => {
+              console.log(`Jogador com ID ${playerId} removido do array de jogadores`);
+              res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
+            })
+            .catch((err) => {
+              console.error(`Erro ao remover jogador com ID ${playerId} do array de jogadores:`, err);
+              res.status(500).json({ message: 'Erro interno do servidor ao excluir jogador', error: err });
+            });
+        } else {
+          console.error('Erro ao ler array de jogadores do Realtime Database');
+          res.status(500).json({ message: 'Erro interno do servidor ao excluir jogador' });
+        }
       });
-  }).catch((err) => {
-    console.error('Erro ao ler dados do Realtime Database:', err);
-    res.status(500).json({ message: 'Erro interno do servidor', error: err });
-  });
+    })
+    .catch((err) => {
+      console.error(`Erro ao excluir jogador com ID ${playerId}:`, err);
+      res.status(500).json({ message: 'Erro interno do servidor ao excluir jogador', error: err });
+    });
 });
 
 
