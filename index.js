@@ -123,18 +123,24 @@ app.post('/jogadores', authenticate, (req, res) => {
 // Rota para excluir um jogador específico por ID (protegida por autenticação)
 app.delete('/jogadores/:id', authenticate, (req, res) => {
   const playerId = req.params.id;
-  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
+  const jogadorRef = admin.database().ref(`jogadores`);
 
   // Verifica se o jogador existe antes de excluí-lo
   jogadorRef.once('value', (snapshot) => {
-    const jogador = snapshot.val();
-    if (!jogador) {
+    const jogadores = snapshot.val();
+    if (!jogadores || !jogadores[playerId]) {
       console.log(`Jogador com ID ${playerId} não encontrado`);
       return res.status(404).json({ message: 'Jogador não encontrado' });
     }
 
-    // Remove o jogador do banco de dados
-    jogadorRef.remove()
+    // Remove o jogador do array
+    const index = jogadores.findIndex(jogador => jogador.id === playerId);
+    if (index !== -1) {
+      jogadores.splice(index, 1);
+    }
+
+    // Atualiza o array de jogadores no banco de dados
+    jogadorRef.set(jogadores)
       .then(() => {
         console.log(`Jogador com ID ${playerId} excluído com sucesso`);
         res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
@@ -148,6 +154,7 @@ app.delete('/jogadores/:id', authenticate, (req, res) => {
     res.status(500).json({ message: 'Erro interno do servidor', error: err });
   });
 });
+
 
 // Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
 app.get('/confrontos', authenticate, (req, res) => {
