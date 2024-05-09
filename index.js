@@ -210,16 +210,32 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const confrontosASalvar = req.body;
 
   const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
-  confrontosRef.set(confrontosASalvar)
-    .then(() => {
-      console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosASalvar);
-      res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
-    })
-    .catch((err) => {
-      console.error('Erro ao salvar confrontos:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao salvar confrontos', error: err });
-    });
+  
+  // Verifica se já existem confrontos na referência do banco de dados
+  confrontosRef.once('value', (snapshot) => {
+    const confrontosAntigos = snapshot.val();
+    let confrontosAtualizados;
+
+    if (confrontosAntigos) {
+      // Se existirem confrontos antigos, adiciona os novos confrontos a eles
+      confrontosAtualizados = [...confrontosAntigos, ...confrontosASalvar];
+    } else {
+      // Se não existirem confrontos antigos, inicializa a lista com os novos confrontos
+      confrontosAtualizados = confrontosASalvar;
+    }
+
+    confrontosRef.set(confrontosAtualizados)
+      .then(() => {
+        console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosAtualizados);
+        res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
+      })
+      .catch((err) => {
+        console.error('Erro ao salvar confrontos:', err);
+        res.status(500).json({ message: 'Erro interno do servidor ao salvar confrontos', error: err });
+      });
+  });
 });
+
 
 // Rota para criar um novo confronto (protegida por autenticação)
 app.post('/confrontos', authenticate, (req, res) => {
