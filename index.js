@@ -210,9 +210,11 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const confrontosASalvar = req.body;
 
   const confrontosRef = admin.database().ref(`confrontos`);
-  
+
   confrontosRef.child(rodada).once('value', (snapshot) => {
-    const confrontosAntigos = snapshot.val() || [];
+    let confrontosAntigos = snapshot.val() || [];
+    confrontosAntigos = Array.isArray(confrontosAntigos) ? confrontosAntigos : [];
+
     const confrontosAtualizados = [...confrontosAntigos, ...confrontosASalvar];
 
     confrontosRef.child(rodada).set(confrontosAtualizados)
@@ -226,8 +228,6 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
       });
   });
 });
-
-
 
 
 // Rota para criar um novo confronto (protegida por autenticação)
