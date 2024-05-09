@@ -212,19 +212,18 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const confrontosRef = admin.database().ref('confrontos');
 
   confrontosRef.once('value', (snapshot) => {
-    let confrontos = snapshot.val() || [];
+    let confrontosAntigos = snapshot.val() || [];
 
-    // Se a rodada já existir, substitua os confrontos
-    if (confrontos[rodada]) {
-      confrontos[rodada] = confrontosASalvar;
-    } else {
-      // Caso contrário, adicione uma nova rodada com os confrontos
-      confrontos.push(confrontosASalvar);
+    if (!Array.isArray(confrontosAntigos)) {
+      confrontosAntigos = [];
     }
 
-    confrontosRef.set(confrontos)
+    confrontosAntigos[rodada] = confrontosAntigos[rodada] || [];
+    confrontosAntigos[rodada] = [...confrontosAntigos[rodada], ...confrontosASalvar];
+
+    confrontosRef.set(confrontosAntigos)
       .then(() => {
-        console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosASalvar);
+        console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosAntigos);
         res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
       })
       .catch((err) => {
@@ -233,6 +232,7 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
       });
   });
 });
+
 
 
 
