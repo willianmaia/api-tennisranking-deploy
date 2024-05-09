@@ -211,31 +211,41 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const confrontosRef = admin.database().ref('confrontos');
 
   confrontosRef.once('value', (snapshot) => {
-    let confrontosAntigos = snapshot.val() || [];
+    let confrontosAntigos = snapshot.val() || {};
 
-    // Verifica se confrontosAntigos não é uma lista
-    if (!Array.isArray(confrontosAntigos)) {
-      confrontosAntigos = [];
+    // Verifica se a rodada já existe
+    if (confrontosAntigos.hasOwnProperty(rodada)) {
+      // Sobrescreve os confrontos antigos pelos novos
+      confrontosAntigos[rodada] = confrontosASalvar;
+
+      // Atualiza os confrontos no banco de dados
+      confrontosRef.set(confrontosAntigos)
+        .then(() => {
+          console.log(`Confrontos da rodada ${rodada} sobrescritos com sucesso:`, confrontosASalvar);
+          res.status(201).json({ message: `Confrontos da rodada ${rodada} sobrescritos com sucesso` });
+        })
+        .catch((err) => {
+          console.error('Erro ao salvar confrontos:', err);
+          res.status(500).json({ message: 'Erro interno do servidor ao salvar confrontos', error: err });
+        });
+    } else {
+      // Caso a rodada não exista, adiciona os novos confrontos normalmente
+      confrontosAntigos[rodada] = confrontosASalvar;
+
+      // Atualiza os confrontos no banco de dados
+      confrontosRef.set(confrontosAntigos)
+        .then(() => {
+          console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosASalvar);
+          res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
+        })
+        .catch((err) => {
+          console.error('Erro ao salvar confrontos:', err);
+          res.status(500).json({ message: 'Erro interno do servidor ao salvar confrontos', error: err });
+        });
     }
-
-    // Verifica se a rodada já existe, senão, inicializa como uma lista vazia
-    confrontosAntigos[rodada] = confrontosAntigos[rodada] || [];
-
-    // Adiciona os novos confrontos à lista da rodada
-    confrontosAntigos[rodada] = [...confrontosAntigos[rodada], ...confrontosASalvar];
-
-    // Atualiza os confrontos no banco de dados
-    confrontosRef.set(confrontosAntigos)
-      .then(() => {
-        console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosAntigos);
-        res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
-      })
-      .catch((err) => {
-        console.error('Erro ao salvar confrontos:', err);
-        res.status(500).json({ message: 'Erro interno do servidor ao salvar confrontos', error: err });
-      });
   });
 });
+
 
 
 
