@@ -211,18 +211,9 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
 
   const confrontosRef = admin.database().ref(`confrontos`);
   
-  // Verifica se já existem confrontos na referência do banco de dados para essa rodada
   confrontosRef.child(rodada).once('value', (snapshot) => {
-    const confrontosAntigos = snapshot.val();
-    let confrontosAtualizados;
-
-    if (confrontosAntigos) {
-      // Se existirem confrontos antigos, adiciona os novos confrontos a eles
-      confrontosAtualizados = [...confrontosAntigos, ...confrontosASalvar];
-    } else {
-      // Se não existirem confrontos antigos, inicializa a lista com os novos confrontos
-      confrontosAtualizados = confrontosASalvar;
-    }
+    const confrontosAntigos = snapshot.val() || [];
+    const confrontosAtualizados = [...confrontosAntigos, ...confrontosASalvar];
 
     confrontosRef.child(rodada).set(confrontosAtualizados)
       .then(() => {
@@ -235,6 +226,7 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
       });
   });
 });
+
 
 
 
