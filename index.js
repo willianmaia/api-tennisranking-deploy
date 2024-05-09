@@ -209,10 +209,10 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const rodada = req.params.rodada;
   const confrontosASalvar = req.body;
 
-  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
+  const confrontosRef = admin.database().ref(`confrontos`);
   
-  // Verifica se já existem confrontos na referência do banco de dados
-  confrontosRef.once('value', (snapshot) => {
+  // Verifica se já existem confrontos na referência do banco de dados para essa rodada
+  confrontosRef.child(rodada).once('value', (snapshot) => {
     const confrontosAntigos = snapshot.val();
     let confrontosAtualizados;
 
@@ -224,7 +224,7 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
       confrontosAtualizados = confrontosASalvar;
     }
 
-    confrontosRef.set(confrontosAtualizados)
+    confrontosRef.child(rodada).set(confrontosAtualizados)
       .then(() => {
         console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosAtualizados);
         res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
@@ -235,6 +235,7 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
       });
   });
 });
+
 
 
 // Rota para criar um novo confronto (protegida por autenticação)
