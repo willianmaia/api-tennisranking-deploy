@@ -204,7 +204,6 @@ app.put('/confrontos/:rodada', authenticate, (req, res) => {
 });
 
 
-// Rota para salvar confrontos para uma determinada rodada (protegida por autenticação)
 app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const rodada = req.params.rodada;
   const confrontosASalvar = req.body;
@@ -214,13 +213,18 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
   confrontosRef.once('value', (snapshot) => {
     let confrontosAntigos = snapshot.val() || [];
 
+    // Verifica se confrontosAntigos não é uma lista
     if (!Array.isArray(confrontosAntigos)) {
       confrontosAntigos = [];
     }
 
+    // Verifica se a rodada já existe, senão, inicializa como uma lista vazia
     confrontosAntigos[rodada] = confrontosAntigos[rodada] || [];
+
+    // Adiciona os novos confrontos à lista da rodada
     confrontosAntigos[rodada] = [...confrontosAntigos[rodada], ...confrontosASalvar];
 
+    // Atualiza os confrontos no banco de dados
     confrontosRef.set(confrontosAntigos)
       .then(() => {
         console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosAntigos);
