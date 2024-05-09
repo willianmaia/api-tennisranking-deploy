@@ -209,17 +209,22 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const rodada = req.params.rodada;
   const confrontosASalvar = req.body;
 
-  const confrontosRef = admin.database().ref(`confrontos`);
+  const confrontosRef = admin.database().ref('confrontos');
 
-  confrontosRef.child(rodada).once('value', (snapshot) => {
-    let confrontosAntigos = snapshot.val() || [];
-    confrontosAntigos = Array.isArray(confrontosAntigos) ? confrontosAntigos : [];
+  confrontosRef.once('value', (snapshot) => {
+    let confrontos = snapshot.val() || [];
 
-    const confrontosAtualizados = [...confrontosAntigos, ...confrontosASalvar];
+    // Se a rodada já existir, substitua os confrontos
+    if (confrontos[rodada]) {
+      confrontos[rodada] = confrontosASalvar;
+    } else {
+      // Caso contrário, adicione uma nova rodada com os confrontos
+      confrontos.push(confrontosASalvar);
+    }
 
-    confrontosRef.child(rodada).set(confrontosAtualizados)
+    confrontosRef.set(confrontos)
       .then(() => {
-        console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosAtualizados);
+        console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosASalvar);
         res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
       })
       .catch((err) => {
@@ -228,6 +233,7 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
       });
   });
 });
+
 
 
 // Rota para criar um novo confronto (protegida por autenticação)
