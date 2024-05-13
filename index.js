@@ -203,7 +203,7 @@ app.put('/confrontos/:rodada', authenticate, (req, res) => {
     });
 });
 
-
+// Rota para criar todos os confrontos de uma determinada rodada (protegida por autenticação)
 app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const rodada = req.params.rodada;
   const confrontosASalvar = req.body;
@@ -247,6 +247,35 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
 });
 
 
+// Rota para excluir todos os confrontos de uma determinada rodada (protegida por autenticação)
+app.delete('/confrontos/:rodada', authenticate, (req, res) => {
+  const rodada = req.params.rodada;
+
+  // Referência para os confrontos da rodada específica
+  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
+
+  // Verifica se a rodada existe antes de excluí-la
+  confrontosRef.once('value', (snapshot) => {
+    if (snapshot.exists()) {
+      // Remove os confrontos da rodada específica
+      confrontosRef.remove()
+        .then(() => {
+          console.log(`Confrontos da rodada ${rodada} excluídos com sucesso`);
+          res.status(200).json({ message: `Confrontos da rodada ${rodada} excluídos com sucesso` });
+        })
+        .catch((err) => {
+          console.error('Erro ao excluir confrontos:', err);
+          res.status(500).json({ message: 'Erro interno do servidor ao excluir confrontos', error: err });
+        });
+    } else {
+      console.log(`Confrontos da rodada ${rodada} não encontrados`);
+      res.status(404).json({ message: `Confrontos da rodada ${rodada} não encontrados` });
+    }
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
+    res.status(500).json({ message: 'Erro interno do servidor', error: err });
+  });
+});
 
 
 
