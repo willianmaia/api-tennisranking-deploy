@@ -453,21 +453,22 @@ app.get('/torneios', authenticate, (req, res) => {
 
 // Rota para buscar um torneio pelo ID
 app.get('/torneios/:id', authenticate, (req, res) => {
-  const torneioId = req.params.id;
-  admin.database().ref('torneios').child(torneioId).once('value')
+  const torneioId = req.params.id; // Obtém o ID do torneio a partir dos parâmetros da requisição
+  admin.database().ref('torneios').child(torneioId).once('value') // Acessa o caminho do torneio com o ID específico na base de dados Firebase
     .then((snapshot) => {
-      const torneio = snapshot.val();
-      if (torneio) {
-        res.status(200).json(torneio);
-      } else {
-        res.status(404).json({ message: 'Torneio não encontrado' });
+      const torneio = snapshot.val(); // Obtém o valor do snapshot (dados do torneio)
+      if (torneio) { // Se o torneio existe (não é nulo)
+        res.status(200).json(torneio); // Retorna o torneio encontrado com status 200 (OK)
+      } else { // Se o torneio não existe
+        res.status(404).json({ message: 'Torneio não encontrado' }); // Retorna uma mensagem de erro com status 404 (Not Found)
       }
     })
-    .catch((err) => {
+    .catch((err) => { // Se ocorrer um erro durante a busca do torneio
       console.error('Erro ao buscar torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao buscar o torneio', error: err });
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar o torneio', error: err }); // Retorna uma mensagem de erro com status 500 (Internal Server Error)
     });
 });
+
 
 
 // Rota para excluir um torneio
