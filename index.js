@@ -437,6 +437,20 @@ app.post('/torneios', authenticate, (req, res) => {
 });
 
 
+// Rota para buscar todos os torneios cadastrados
+app.get('/torneios', authenticate, (req, res) => {
+  admin.database().ref('torneios').once('value')
+    .then((snapshot) => {
+      const torneios = snapshot.val();
+      res.status(200).json(torneios);
+    })
+    .catch((err) => {
+      console.error('Erro ao buscar torneios:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar torneios', error: err });
+    });
+});
+
+
 
 // Rota para adicionar um jogador a um torneio
 app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
