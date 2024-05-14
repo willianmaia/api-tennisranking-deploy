@@ -419,6 +419,7 @@ app.post('/login', authenticate, (req, res) => {
     });
 });
 
+// Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
 
@@ -443,19 +444,30 @@ app.post('/torneios', authenticate, (req, res) => {
         } else {
           // Adiciona o id ao novo torneio
           novoTorneio.id = idTorneio;
+		  novoTorneio.jogadores = [];
 
-          // Adiciona uma lista vazia de jogadores ao novo torneio
-          novoTorneio.jogadores = [];
+          // Obtém a lista de torneios existentes
+          admin.database().ref('torneios').once('value')
+            .then(snapshot => {
+              let torneios = snapshot.val() || []; // Se não houver torneios, começa com um array vazio
+            
+              // Adiciona o novo torneio à lista de torneios
+              torneios.push(novoTorneio);
 
-          // Salva o novo torneio no banco de dados
-          admin.database().ref('torneios').push(novoTorneio)
-            .then(() => {
-              console.log('Novo torneio adicionado:', novoTorneio);
-              const resposta = { message: 'Torneio criado com sucesso' };
-              res.status(201).json(resposta);
+              // Salva a lista atualizada de torneios de volta no banco de dados
+              admin.database().ref('torneios').set(torneios)
+                .then(() => {
+                  console.log('Novo torneio adicionado:', novoTorneio);
+                  const resposta = { message: 'Torneio criado com sucesso' };
+                  res.status(201).json(resposta);
+                })
+                .catch((err) => {
+                  console.error('Erro ao escrever dados no Realtime Database:', err);
+                  res.status(500).json({ message: 'Erro interno do servidor' });
+                });
             })
-            .catch((err) => {
-              console.error('Erro ao escrever dados no Realtime Database:', err);
+            .catch(err => {
+              console.error('Erro ao obter torneios existentes:', err);
               res.status(500).json({ message: 'Erro interno do servidor' });
             });
         }
@@ -466,7 +478,6 @@ app.post('/torneios', authenticate, (req, res) => {
       });
   }
 });
-
 
 
 
