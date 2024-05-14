@@ -74,7 +74,7 @@ app.post('/jogadores', authenticate, (req, res) => {
   const novoJogador = req.body;
 
   // Obtém a próxima ID sequencial como string
-  adminTournaments.database().ref('proximoId').transaction((currentValue) => {
+  adminRanking.database().ref('proximoId').transaction((currentValue) => {
     return (currentValue || 0) + 1;
   }, (error, committed, snapshot) => {
     if (error) {
@@ -88,7 +88,7 @@ app.post('/jogadores', authenticate, (req, res) => {
       novoJogador.id = proximaIdString;
 
       // Adiciona o novo jogador ao banco de dados com a ID sequencial
-      const jogadoresRef = adminTournaments.database().ref('jogadores');
+      const jogadoresRef = adminRanking.database().ref('jogadores');
 
       // Obtém a lista de jogadores existentes
       jogadoresRef.once('value')
@@ -417,6 +417,57 @@ app.post('/login', authenticate, (req, res) => {
     .catch((error) => {
       // Tratar erros de consulta ao banco de dados
       res.status(500).json({ error: "Erro ao verificar dados do usuário na base de dados: " + error.message });
+    });
+});
+
+// Rota para criar um novo torneio
+app.post('/torneios', authenticate, (req, res) => {
+  const novoTorneio = req.body;
+  const nomeTorneio = novoTorneio.nome;
+
+  const torneiosRef = adminTournaments.database().ref('torneios');
+  torneiosRef.child(nomeTorneio).set({})
+    .then(() => {
+      console.log('Novo torneio criado:', nomeTorneio);
+      res.status(201).json({ nome: nomeTorneio });
+    })
+    .catch((err) => {
+      console.error('Erro ao criar novo torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao criar o torneio', error: err });
+    });
+});
+
+// Rota para cadastrar um jogador para um torneio específico
+app.post('/torneios/:torneio/jogadores', authenticate, (req, res) => {
+  const torneioId = req.params.torneio;
+  const novoJogador = req.body;
+
+  const jogadoresRef = adminTournaments.database().ref(`torneios/${torneioId}/jogadores`);
+  jogadoresRef.push(novoJogador)
+    .then(() => {
+      console.log('Novo jogador cadastrado para o torneio:', novoJogador);
+      res.status(201).json(novoJogador);
+    })
+    .catch((err) => {
+      console.error('Erro ao cadastrar jogador para o torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao cadastrar jogador', error: err });
+    });
+});
+
+// Rota para cadastrar um jogo para um torneio específico
+app.post('/torneios/:torneio/jogos', authenticate, (req, res) => {
+  const torneioId = req.params.torneio;
+  const novoJogo = req.body;
+
+  const jogosRef = adminTournaments.database().ref(`torneios/${torneioId}/jogos`);
+  jogosRef.push(novoJogo)
+    .then(() => {
+      console.log('Novo jogo cadastrado para o torneio:', novoJogo);
+      res.status(201).json(novoJogo);
+    })
+    .catch((err) => {
+      console.error('Erro ao cadastrar jogo para o torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao cadastrar jogo', error: err });
     });
 });
 
