@@ -498,20 +498,26 @@ app.get('/torneios', authenticate, (req, res) => {
 // Rota para buscar um torneio pelo ID
 app.get('/torneios/:id', authenticate, (req, res) => {
   const torneioId = req.params.id;
-  admin.database().ref('torneios').child(torneioId).once('value')
+  admin.database().ref('torneios').once('value')
     .then((snapshot) => {
-      const torneio = snapshot.val();
-      if (torneio) {
-        res.status(200).json(torneio);
+      const torneios = snapshot.val();
+      if (torneios) {
+        const torneioEncontrado = Object.values(torneios).find(torneio => torneio && torneio.id === torneioId);
+        if (torneioEncontrado) {
+          res.status(200).json(torneioEncontrado);
+        } else {
+          res.status(404).json({ message: 'Torneio não encontrado' });
+        }
       } else {
-        res.status(404).json({ message: 'Torneio não encontrado' });
+        res.status(404).json({ message: 'Nenhum torneio encontrado' });
       }
     })
     .catch((err) => {
-      console.error('Erro ao buscar torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao buscar o torneio', error: err });
+      console.error('Erro ao buscar torneios:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar os torneios', error: err });
     });
 });
+
 
 
 // Rota para excluir um torneio
