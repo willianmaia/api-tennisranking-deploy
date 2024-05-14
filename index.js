@@ -420,29 +420,16 @@ app.post('/login', authenticate, (req, res) => {
     });
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
   const nomeTorneio = novoTorneio.nome;
 
-  const torneiosRef = adminRanking.database().ref('torneios');
+  const torneiosRef = adminTournaments.database().ref('torneios');
   torneiosRef.child(nomeTorneio).set({})
     .then(() => {
       console.log('Novo torneio criado:', nomeTorneio);
-      res.status(201).json({ nome: nomeTorneio });
+      res.status(201).json({ nomea: nomeTorneio });
     })
     .catch((err) => {
       console.error('Erro ao criar novo torneio:', err);
