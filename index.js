@@ -419,6 +419,62 @@ app.post('/login', authenticate, (req, res) => {
     });
 });
 
+
+
+
+// Rota para criar um novo torneio
+app.post('/torneios', authenticate, (req, res) => {
+  const novoTorneio = req.body;
+
+  const torneiosRef = admin.database().ref('torneios').push();
+  torneiosRef.set(novoTorneio)
+    .then(() => {
+      console.log('Novo torneio criado:', novoTorneio);
+      res.status(201).json(novoTorneio);
+    })
+    .catch((err) => {
+      console.error('Erro ao criar novo torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao criar o torneio', error: err });
+    });
+});
+
+// Rota para cadastrar um jogador para um torneio específico
+app.post('/torneios/:torneio/jogadores', authenticate, (req, res) => {
+  const torneioId = req.params.torneio;
+  const novoJogador = req.body;
+
+  const jogadoresRef = admin.database().ref(`torneios/${torneioId}/jogadores`);
+  jogadoresRef.push(novoJogador)
+    .then(() => {
+      console.log('Novo jogador cadastrado para o torneio:', novoJogador);
+      res.status(201).json(novoJogador);
+    })
+    .catch((err) => {
+      console.error('Erro ao cadastrar jogador para o torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao cadastrar jogador', error: err });
+    });
+});
+
+// Rota para cadastrar um jogo para um torneio específico
+app.post('/torneios/:torneio/jogos', authenticate, (req, res) => {
+  const torneioId = req.params.torneio;
+  const novoJogo = req.body;
+
+  const jogosRef = admin.database().ref(`torneios/${torneioId}/jogos`);
+  jogosRef.push(novoJogo)
+    .then(() => {
+      console.log('Novo jogo cadastrado para o torneio:', novoJogo);
+      res.status(201).json(novoJogo);
+    })
+    .catch((err) => {
+      console.error('Erro ao cadastrar jogo para o torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao cadastrar jogo', error: err });
+    });
+});
+
+
+
+
 // Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
