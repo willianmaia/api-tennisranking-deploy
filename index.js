@@ -429,23 +429,20 @@ app.post('/login', authenticate, (req, res) => {
 
 // Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
-  const novoTorneio = req.body;
-  const nomeTorneio = novoTorneio.nome; // Obtém o nome do torneio
+  const { nome } = req.body; // Extrai o nome do corpo da requisição
 
-  // Define o ID do torneio como o nome do torneio
-  novoTorneio.id = nomeTorneio;
-
-  const torneiosRef = adminTournaments.database().ref('torneios').child(nomeTorneio);
-  torneiosRef.set(novoTorneio)
+  const torneioRef = adminTournaments.database().ref('torneios').child(nome); // Define o ID do torneio como o nome fornecido
+  torneioRef.set({}) // Cria o torneio com uma estrutura vazia
     .then(() => {
-      console.log('Novo torneio criado:', novoTorneio);
-      res.status(201).json(novoTorneio);
+      console.log('Novo torneio criado:', nome);
+      res.status(201).json({ nome }); // Retorna o nome do torneio como confirmação
     })
     .catch((err) => {
       console.error('Erro ao criar novo torneio:', err);
       res.status(500).json({ message: 'Erro interno do servidor ao criar o torneio', error: err });
     });
 });
+
 
 
 // Rota para cadastrar um jogador para um torneio específico
