@@ -438,9 +438,6 @@ app.post('/torneios', authenticate, (req, res) => {
     });
 });
 
-
-
-
 // Rota para buscar todos os torneios cadastrados
 app.get('/torneios', authenticate, (req, res) => {
   admin.database().ref('torneios').once('value')
@@ -451,6 +448,31 @@ app.get('/torneios', authenticate, (req, res) => {
     .catch((err) => {
       console.error('Erro ao buscar torneios:', err);
       res.status(500).json({ message: 'Erro interno do servidor ao buscar torneios', error: err });
+    });
+});
+
+// Rota para excluir um torneio
+app.delete('/torneios/:id', authenticate, (req, res) => {
+  const torneioId = req.params.id;
+  const torneiosRef = admin.database().ref('torneios');
+
+  // Verifica se o torneio existe
+  torneiosRef.child(torneioId).once('value')
+    .then((snapshot) => {
+      if (!snapshot.exists()) {
+        return res.status(404).json({ message: 'Torneio não encontrado' });
+      } else {
+        // Remove o torneio
+        return torneiosRef.child(torneioId).remove();
+      }
+    })
+    .then(() => {
+      console.log('Torneio excluído com sucesso:', torneioId);
+      res.status(200).json({ message: 'Torneio excluído com sucesso' });
+    })
+    .catch((err) => {
+      console.error('Erro ao excluir torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao excluir o torneio', error: err });
     });
 });
 
