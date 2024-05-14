@@ -3,7 +3,7 @@ require('dotenv').config({ path: 'tournaments.env' });
 const admin = require('firebase-admin');
 
 // Inicialização do Firebase Admin SDK
-admin.initializeApp({
+const tournamentsAdmin = admin.initializeApp({
   credential: admin.credential.cert({
     type: process.env.TYPE,
     project_id: process.env.PROJECT_ID,
@@ -19,4 +19,4 @@ admin.initializeApp({
   databaseURL: "https://tennistournaments-project-default-rtdb.firebaseio.com"
 });
 
-module.exports = admin;
+module.exports = tournamentsAdmin;
