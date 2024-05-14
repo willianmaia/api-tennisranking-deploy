@@ -422,7 +422,9 @@ app.post('/login', authenticate, (req, res) => {
 // Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
-  admin.database().ref('torneios').push(novoTorneio)
+  const nomeTorneio = novoTorneio.nome.replace(/\s/g, '_'); // Substitui espaços por underscores
+  const torneioRef = admin.database().ref('torneios').child(nomeTorneio); // Define o ID com o nome do torneio
+  torneioRef.set(novoTorneio)
     .then(() => {
       console.log('Novo torneio criado:', novoTorneio);
       const resposta = { message: 'Torneio criado com sucesso' };
@@ -433,6 +435,7 @@ app.post('/torneios', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor ao criar o torneio', error: err });
     });
 });
+
 
 
 // Rota para adicionar um jogador a um torneio
