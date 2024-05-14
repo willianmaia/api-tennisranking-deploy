@@ -444,7 +444,7 @@ app.post('/torneios', authenticate, (req, res) => {
         } else {
           // Adiciona o id ao novo torneio
           novoTorneio.id = idTorneio;
-		  novoTorneio.jogadores = [];
+		  novoTorneio.jogadores : [];
 
           // Obtém a lista de torneios existentes
           admin.database().ref('torneios').once('value')
