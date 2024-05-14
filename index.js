@@ -431,7 +431,7 @@ app.post('/login', authenticate, (req, res) => {
 app.post('/torneios', authenticate, (req, res) => {
   const { nome } = req.body; // Extrai o nome do corpo da requisição
 
-  const torneioRef = adminTournaments.database().ref('torneios').child(nome); // Define o ID do torneio como o nome fornecido
+  const torneioRef = adminRanking.database().ref('torneios').child(nome); // Define o ID do torneio como o nome fornecido
   torneioRef.set({}) // Cria o torneio com uma estrutura vazia
     .then(() => {
       console.log('Novo torneio criado:', nome);
