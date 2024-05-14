@@ -425,13 +425,15 @@ app.post('/torneios', authenticate, (req, res) => {
   admin.database().ref('torneios').push(novoTorneio)
     .then(() => {
       console.log('Novo torneio criado:', novoTorneio);
-      res.status(201).json(novoTorneio);
+      const resposta = { message: 'Torneio criado com sucesso' };
+      res.status(201).json(resposta);
     })
     .catch((err) => {
       console.error('Erro ao criar novo torneio:', err);
       res.status(500).json({ message: 'Erro interno do servidor ao criar o torneio', error: err });
     });
 });
+
 
 // Rota para adicionar um jogador a um torneio
 app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
