@@ -547,7 +547,6 @@ app.delete('/torneios/:id', authenticate, (req, res) => {
 
 
 
-// Rota para adicionar um jogador a um torneio
 app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogador = req.body;
@@ -563,7 +562,11 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
         return;
       }
 
-      let jogadores = torneio.jogadores || []; // Inicializa a lista de jogadores como vazia se não existir
+      if (!torneio.jogadores) {
+        torneio.jogadores = []; // Inicializa a lista de jogadores como vazia se não existir
+      }
+
+      let jogadores = torneio.jogadores;
       
       jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
 
@@ -583,6 +586,7 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor' });
     });
 });
+
 
 
 
