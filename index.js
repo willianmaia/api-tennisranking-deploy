@@ -545,21 +545,27 @@ app.delete('/torneios/:id', authenticate, (req, res) => {
     });
 });
 
-
 app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogador = req.body;
 
-  const torneioRef = admin.database().ref(`torneios/${torneioId}/jogadores`);
+  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
 
   torneioRef.once('value')
     .then(snapshot => {
-      let jogadores = snapshot.val() || []; // Se não houver jogadores, cria uma lista de jogadores vazia
+      const torneio = snapshot.val();
+
+      if (!torneio) {
+        res.status(404).json({ message: 'Torneio não encontrado' });
+        return;
+      }
+
+      let jogadores = torneio.jogadores || []; // Verifica se a lista de jogadores existe
 
       jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
 
       // Atualiza o torneio com a lista de jogadores
-      torneioRef.set(jogadores)
+      torneioRef.update({ jogadores })
         .then(() => {
           console.log('Novo jogador adicionado ao torneio:', novoJogador);
           res.status(201).json(novoJogador);
