@@ -560,8 +560,8 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
         return;
       }
 
-      let jogadores = torneio.jogadores || []; // Verifica se a lista de jogadores existe
-
+      let jogadores = torneio.jogadores || []; // Obtém a lista de jogadores ou inicializa como vazia se não existir
+      
       jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
 
       // Atualiza o torneio com a lista de jogadores
