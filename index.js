@@ -552,20 +552,21 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogador = req.body;
 
-  const torneioRef = admin.database().ref(`torneios/${torneioId}/jogadores`);
+  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
 
   torneioRef.once('value')
     .then(snapshot => {
+      const torneio = snapshot.val();
       let jogadores = [];
 
-      if (snapshot.exists()) {
-        jogadores = snapshot.val();
+      if (torneio && torneio.jogadores) {
+        jogadores = torneio.jogadores;
       }
 
       jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
 
       // Atualiza o torneio com a lista de jogadores
-      torneioRef.set(jogadores)
+      torneioRef.update({ jogadores })
         .then(() => {
           console.log('Novo jogador adicionado ao torneio:', novoJogador);
           res.status(201).json(novoJogador);
@@ -576,10 +577,11 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
         });
     })
     .catch(err => {
-      console.error('Erro ao verificar se a lista de jogadores existe:', err);
+      console.error('Erro ao verificar se o torneio existe:', err);
       res.status(500).json({ message: 'Erro interno do servidor' });
     });
 });
+
 
 
 
