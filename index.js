@@ -557,11 +557,6 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
     .then(snapshot => {
       const torneio = snapshot.val();
 
-      if (!torneio) {
-        res.status(404).json({ message: 'Torneio não encontrado' });
-        return;
-      }
-
       if (!torneio.jogadores) {
         torneio.jogadores = []; // Inicializa a lista de jogadores como vazia se não existir
       }
