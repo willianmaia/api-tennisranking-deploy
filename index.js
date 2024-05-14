@@ -451,6 +451,25 @@ app.get('/torneios', authenticate, (req, res) => {
     });
 });
 
+// Rota para buscar um torneio pelo ID
+app.get('/torneios/:id', authenticate, (req, res) => {
+  const torneioId = req.params.id;
+  admin.database().ref('torneios').child(torneioId).once('value')
+    .then((snapshot) => {
+      const torneio = snapshot.val();
+      if (torneio) {
+        res.status(200).json(torneio);
+      } else {
+        res.status(404).json({ message: 'Torneio não encontrado' });
+      }
+    })
+    .catch((err) => {
+      console.error('Erro ao buscar torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar o torneio', error: err });
+    });
+});
+
+
 // Rota para excluir um torneio
 app.delete('/torneios/:id', authenticate, (req, res) => {
   const torneioId = req.params.id;
