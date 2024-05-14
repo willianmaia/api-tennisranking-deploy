@@ -422,19 +422,32 @@ app.post('/login', authenticate, (req, res) => {
 // Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
-  const nomeTorneio = novoTorneio.nome.replace(/\s/g, '_'); // Substitui espaços por underscores
-  const torneioRef = admin.database().ref('torneios').child(nomeTorneio); // Define o ID com o nome do torneio
-  torneioRef.set(novoTorneio)
-    .then(() => {
-      console.log('Novo torneio criado:', novoTorneio);
-      const resposta = { message: 'Torneio criado com sucesso' };
-      res.status(201).json(resposta);
+
+  // Obtém a lista de torneios existentes
+  admin.database().ref('torneios').once('value')
+    .then(snapshot => {
+      let torneios = snapshot.val() || []; // Se não houver torneios, começa com um array vazio
+      
+      // Adiciona o novo torneio à lista de torneios
+      torneios.push(novoTorneio);
+
+      // Salva a lista atualizada de torneios de volta no banco de dados
+      admin.database().ref('torneios').set(torneios)
+        .then(() => {
+          console.log('Novo torneio adicionado:', novoTorneio);
+          res.status(201).json(novoTorneio);
+        })
+        .catch((err) => {
+          console.error('Erro ao escrever dados no Realtime Database:', err);
+          res.status(500).json({ message: 'Erro interno do servidor' });
+        });
     })
-    .catch((err) => {
-      console.error('Erro ao criar novo torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao criar o torneio', error: err });
+    .catch(err => {
+      console.error('Erro ao obter torneios existentes:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
     });
 });
+
 
 
 // Rota para buscar todos os torneios cadastrados
