@@ -4,8 +4,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const atob = require('atob'); // Importe o pacote 'atob'
-const adminRanking = require("./firebaseConfig");
-const adminTournaments = require("./firebaseConfigTournaments");
+const admin = require("./firebaseConfig");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,7 +40,7 @@ const authenticate = (req, res, next) => {
 
 // Rota para obter todos os jogadores (protegida por autenticação)
 app.get('/jogadores', authenticate, (req, res) => {
-  const jogadoresRef = adminRanking.database().ref('jogadores');
+  const jogadoresRef = admin.database().ref('jogadores');
   jogadoresRef.once('value', (snapshot) => {
     const jogadores = snapshot.val();
     console.log('Jogadores encontrados:', jogadores);
@@ -55,7 +54,7 @@ app.get('/jogadores', authenticate, (req, res) => {
 // Rota para obter um jogador específico por ID (protegida por autenticação)
 app.get('/jogadores/:id', authenticate, (req, res) => {
   const playerId = req.params.id;
-  const jogadorRef = adminRanking.database().ref(`jogadores/${playerId}`);
+  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
   jogadorRef.once('value', (snapshot) => {
     const jogador = snapshot.val();
     if (!jogador) {
@@ -74,7 +73,7 @@ app.post('/jogadores', authenticate, (req, res) => {
   const novoJogador = req.body;
 
   // Obtém a próxima ID sequencial como string
-  adminRanking.database().ref('proximoId').transaction((currentValue) => {
+  admin.database().ref('proximoId').transaction((currentValue) => {
     return (currentValue || 0) + 1;
   }, (error, committed, snapshot) => {
     if (error) {
@@ -88,7 +87,7 @@ app.post('/jogadores', authenticate, (req, res) => {
       novoJogador.id = proximaIdString;
 
       // Adiciona o novo jogador ao banco de dados com a ID sequencial
-      const jogadoresRef = adminRanking.database().ref('jogadores');
+      const jogadoresRef = admin.database().ref('jogadores');
 
       // Obtém a lista de jogadores existentes
       jogadoresRef.once('value')
@@ -124,7 +123,7 @@ app.post('/jogadores', authenticate, (req, res) => {
 // Rota para excluir um jogador específico por ID (protegida por autenticação)
 app.delete('/jogadores/:id', authenticate, (req, res) => {
   const playerId = req.params.id;
-  const jogadorRef = adminRanking.database().ref(`jogadores/${playerId}`);
+  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
 
   // Verifica se o jogador existe antes de excluí-lo
   jogadorRef.once('value', (snapshot) => {
@@ -139,7 +138,7 @@ app.delete('/jogadores/:id', authenticate, (req, res) => {
       .then(() => {
         console.log(`Jogador com ID ${playerId} excluído com sucesso`);
 		// Remove a referência do jogador do banco de dados
-		return adminRanking.database().ref(`jogadores`).child(playerId).remove();
+		return admin.database().ref(`jogadores`).child(playerId).remove();
       })
 	  .then(() => {
 		res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
@@ -156,7 +155,7 @@ app.delete('/jogadores/:id', authenticate, (req, res) => {
 
 // Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
 app.get('/confrontos', authenticate, (req, res) => {
-  const confrontosRef = adminRanking.database().ref('confrontos');
+  const confrontosRef = admin.database().ref('confrontos');
   confrontosRef.once('value', (snapshot) => {
     const confrontos = snapshot.val();
     console.log('Confrontos encontrados:', confrontos);
@@ -170,7 +169,7 @@ app.get('/confrontos', authenticate, (req, res) => {
 // Rota para obter um confronto específico por ID (protegida por autenticação)
 app.get('/confrontos/:id', authenticate, (req, res) => {
   const confrontoId = req.params.id;
-  const confrontoRef = adminRanking.database().ref(`confrontos/${confrontoId}`);
+  const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
   confrontoRef.once('value', (snapshot) => {
     const confronto = snapshot.val();
     if (!confronto) {
@@ -190,7 +189,7 @@ app.put('/confrontos/:rodada', authenticate, (req, res) => {
   const rodada = req.params.rodada;
   const confrontosAtualizados = req.body;
 
-  const confrontosRef = adminRanking.database().ref(`confrontos/${rodada}`);
+  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
 
   // Atualiza os confrontos existentes com os dados recebidos
   confrontosRef.set(confrontosAtualizados)
@@ -209,7 +208,7 @@ app.post('/confrontos/:rodada', authenticate, (req, res) => {
   const rodada = req.params.rodada;
   const confrontosASalvar = req.body;
 
-  const confrontosRef = adminRanking.database().ref('confrontos');
+  const confrontosRef = admin.database().ref('confrontos');
 
   confrontosRef.once('value', (snapshot) => {
     let confrontosAntigos = snapshot.val() || {};
@@ -253,7 +252,7 @@ app.delete('/confrontos/:rodada', authenticate, (req, res) => {
   const rodada = req.params.rodada;
 
   // Referência para os confrontos da rodada específica
-  const confrontosRef = adminRanking.database().ref(`confrontos/${rodada}`);
+  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
 
   // Verifica se a rodada existe antes de excluí-la
   confrontosRef.once('value', (snapshot) => {
@@ -284,7 +283,7 @@ app.delete('/confrontos/:rodada', authenticate, (req, res) => {
 app.post('/confrontos', authenticate, (req, res) => {
   const novoConfronto = req.body;
 
-  const confrontosRef = adminRanking.database().ref('confrontos').push();
+  const confrontosRef = admin.database().ref('confrontos').push();
   confrontosRef.set(novoConfronto)
     .then(() => {
       console.log('Novo confronto adicionado:', novoConfronto);
@@ -309,7 +308,7 @@ app.post('/updateUserData', authenticate, (req, res) => {
   }
 
   // Atualizar os dados do usuário na Realtime Database
-  adminRanking.database().ref(`/usuarios/${sanitizedEmail}`).once('value')
+  admin.database().ref(`/usuarios/${sanitizedEmail}`).once('value')
     .then((snapshot) => {
       if (snapshot.exists()) {
         // Obtenha os dados atuais do usuário
@@ -325,7 +324,7 @@ app.post('/updateUserData', authenticate, (req, res) => {
         };
 
         // Atualize os dados do usuário na Realtime Database
-        adminRanking.database().ref(`/usuarios/${sanitizedEmail}`).update(updatedData)
+        admin.database().ref(`/usuarios/${sanitizedEmail}`).update(updatedData)
           .then(() => {
             res.status(200).send("Dados do usuário atualizados com sucesso");
           })
@@ -353,14 +352,14 @@ app.post('/createUser', authenticate, (req, res) => {
   const sanitizedEmail = email.replace(/\./g, ',').replace(/@/g, '_');
 
   // Verificar se o e-mail já está cadastrado na Realtime Database
-  adminRanking.database().ref(`/usuarios/${sanitizedEmail}`).once('value')
+  admin.database().ref(`/usuarios/${sanitizedEmail}`).once('value')
     .then((snapshot) => {
       if (snapshot.exists()) {
         // Se o email já existe na base, enviar resposta indicando que o email já está cadastrado
         res.status(400).json({ message: "O email já está cadastrado" });
       } else {
         // Se o email não existe na base, criar um novo usuário
-        adminRanking.database().ref(`/usuarios/${sanitizedEmail}`).set({
+        admin.database().ref(`/usuarios/${sanitizedEmail}`).set({
           nome: nome,
           sobrenome: sobrenome,
           email: email,
@@ -396,7 +395,7 @@ app.post('/login', authenticate, (req, res) => {
   }
 
   // Verificar se o e-mail e a senha estão corretos
-  adminRanking.database().ref(`/usuarios/${sanitizedEmail}`).once('value')
+  admin.database().ref(`/usuarios/${sanitizedEmail}`).once('value')
     .then((snapshot) => {
       if (snapshot.exists()) {
         const userData = snapshot.val();
@@ -420,16 +419,10 @@ app.post('/login', authenticate, (req, res) => {
     });
 });
 
-
-
-
-
-
-
 // Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
-  adminTournaments.database().ref('torneios').push(novoTorneio)
+  admin.database().ref('torneios').push(novoTorneio)
     .then(() => {
       console.log('Novo torneio criado:', novoTorneio);
       res.status(201).json(novoTorneio);
@@ -445,7 +438,7 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogador = req.body;
 
-  adminTournaments.database().ref(`torneios/${torneioId}/jogadores`).push(novoJogador)
+  admin.database().ref(`torneios/${torneioId}/jogadores`).push(novoJogador)
     .then(() => {
       console.log('Novo jogador adicionado ao torneio:', novoJogador);
       res.status(201).json(novoJogador);
@@ -461,7 +454,7 @@ app.post('/torneios/:torneioId/jogos', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogo = req.body;
 
-  adminTournaments.database().ref(`torneios/${torneioId}/jogos`).push(novoJogo)
+  admin.database().ref(`torneios/${torneioId}/jogos`).push(novoJogo)
     .then(() => {
       console.log('Novo jogo adicionado ao torneio:', novoJogo);
       res.status(201).json(novoJogo);
@@ -471,11 +464,6 @@ app.post('/torneios/:torneioId/jogos', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor ao adicionar jogo ao torneio', error: err });
     });
 });
-
-
-
-
-
 
 // Iniciar o servidor
 app.listen(PORT, () => {
