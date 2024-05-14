@@ -435,7 +435,8 @@ app.post('/torneios', authenticate, (req, res) => {
       admin.database().ref('torneios').set(torneios)
         .then(() => {
           console.log('Novo torneio adicionado:', novoTorneio);
-          res.status(201).json(novoTorneio);
+		  const resposta = { message: 'Torneio criado com sucesso' };
+		  res.status(201).json(resposta);
         })
         .catch((err) => {
           console.error('Erro ao escrever dados no Realtime Database:', err);
