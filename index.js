@@ -432,15 +432,19 @@ app.post('/torneios', authenticate, (req, res) => {
     res.status(400).json({ message: `Campos obrigatórios faltando: ${camposFaltando.join(', ')}` });
   } else {
     const nomeTorneio = novoTorneio.nome;
+    const idTorneio = nomeTorneio.replace(/\s+/g, '_'); // Substitui espaços por _
 
     // Verifica se o nome do torneio já existe
-    admin.database().ref('torneios').orderByChild('nome').equalTo(nomeTorneio).once('value')
+    admin.database().ref('torneios').orderByChild('id').equalTo(idTorneio).once('value')
       .then(snapshot => {
         if (snapshot.exists()) {
           // Se o nome do torneio já existe, responde com uma mensagem de erro
           console.log('Nome do torneio já existe:', nomeTorneio);
           res.status(400).json({ message: 'O nome do torneio já existe' });
         } else {
+          // Adiciona o id ao novo torneio
+          novoTorneio.id = idTorneio;
+
           // Obtém a lista de torneios existentes
           admin.database().ref('torneios').once('value')
             .then(snapshot => {
@@ -473,6 +477,7 @@ app.post('/torneios', authenticate, (req, res) => {
       });
   }
 });
+
 
 
 
