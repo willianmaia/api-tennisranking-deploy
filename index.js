@@ -563,12 +563,8 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
         return;
       }
 
-      let jogadores = [];
-
-      if (torneio.jogadores) {
-        jogadores = torneio.jogadores;
-      }
-
+      let jogadores = torneio.jogadores || []; // Inicializa a lista de jogadores como vazia se não existir
+      
       jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
 
       // Atualiza o torneio com a lista de jogadores
@@ -587,6 +583,7 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor' });
     });
 });
+
 
 
 
