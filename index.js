@@ -422,14 +422,12 @@ app.post('/login', authenticate, (req, res) => {
 // Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
-  const torneiosRef = admin.database().ref('torneios');
-  torneiosRef.once('value') // Obtém uma referência única para evitar concorrência
+  const nomeTorneio = novoTorneio.nome.replace(/\s/g, '_'); // Substitui espaços por underscores
+  const torneioRef = admin.database().ref('torneios').child(nomeTorneio); // Define o ID com o nome do torneio
+  torneioRef.set(novoTorneio)
     .then(() => {
-      return torneiosRef.push(novoTorneio); // Adiciona o novo torneio à lista
-    })
-    .then((snapshot) => {
       console.log('Novo torneio criado:', novoTorneio);
-      const resposta = { message: 'Torneio criado com sucesso', id: snapshot.key };
+      const resposta = { message: 'Torneio criado com sucesso' };
       res.status(201).json(resposta);
     })
     .catch((err) => {
@@ -437,6 +435,7 @@ app.post('/torneios', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor ao criar o torneio', error: err });
     });
 });
+
 
 // Rota para buscar todos os torneios cadastrados
 app.get('/torneios', authenticate, (req, res) => {
@@ -453,22 +452,21 @@ app.get('/torneios', authenticate, (req, res) => {
 
 // Rota para buscar um torneio pelo ID
 app.get('/torneios/:id', authenticate, (req, res) => {
-  const torneioId = req.params.id; // Obtém o ID do torneio a partir dos parâmetros da requisição
-  admin.database().ref('torneios').child(torneioId).once('value') // Acessa o caminho do torneio com o ID específico na base de dados Firebase
+  const torneioId = req.params.id;
+  admin.database().ref('torneios').child(torneioId).once('value')
     .then((snapshot) => {
-      const torneio = snapshot.val(); // Obtém o valor do snapshot (dados do torneio)
-      if (torneio) { // Se o torneio existe (não é nulo)
-        res.status(200).json(torneio); // Retorna o torneio encontrado com status 200 (OK)
-      } else { // Se o torneio não existe
-        res.status(404).json({ message: 'Torneio não encontrado' }); // Retorna uma mensagem de erro com status 404 (Not Found)
+      const torneio = snapshot.val();
+      if (torneio) {
+        res.status(200).json(torneio);
+      } else {
+        res.status(404).json({ message: 'Torneio não encontrado' });
       }
     })
-    .catch((err) => { // Se ocorrer um erro durante a busca do torneio
+    .catch((err) => {
       console.error('Erro ao buscar torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao buscar o torneio', error: err }); // Retorna uma mensagem de erro com status 500 (Internal Server Error)
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar o torneio', error: err });
     });
 });
-
 
 
 // Rota para excluir um torneio
