@@ -552,16 +552,43 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogador = req.body;
 
-  admin.database().ref(`torneios/${torneioId}/jogadores`).push(novoJogador)
-    .then(() => {
-      console.log('Novo jogador adicionado ao torneio:', novoJogador);
-      res.status(201).json(novoJogador);
-    })
-    .catch((err) => {
-      console.error('Erro ao adicionar jogador ao torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao adicionar jogador ao torneio', error: err });
-    });
+  // Obtém uma referência para o nó do torneio no banco de dados
+  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
+
+  // Verifica se o torneio já existe
+  torneioRef.once('value', snapshot => {
+    if (snapshot.exists()) {
+      // Obtém os dados do torneio
+      const torneio = snapshot.val();
+
+      // Inicializa a lista de jogadores se ainda não existir
+      if (!torneio.jogadores) {
+        torneio.jogadores = [];
+      }
+
+      // Adiciona o novo jogador à lista de jogadores
+      torneio.jogadores.push(novoJogador);
+
+      // Atualiza os dados do torneio no banco de dados
+      torneioRef.set(torneio)
+        .then(() => {
+          console.log('Novo jogador adicionado ao torneio:', novoJogador);
+          res.status(201).json(novoJogador);
+        })
+        .catch((err) => {
+          console.error('Erro ao adicionar jogador ao torneio:', err);
+          res.status(500).json({ message: 'Erro interno do servidor ao adicionar jogador ao torneio', error: err });
+        });
+    } else {
+      // Se o torneio não existir, retorna uma mensagem de erro
+      res.status(404).json({ message: 'Torneio não encontrado' });
+    }
+  }).catch((err) => {
+    console.error('Erro ao buscar torneio:', err);
+    res.status(500).json({ message: 'Erro interno do servidor ao buscar o torneio', error: err });
+  });
 });
+
 
 // Rota para adicionar um jogo a um torneio
 app.post('/torneios/:torneioId/jogos', authenticate, (req, res) => {
