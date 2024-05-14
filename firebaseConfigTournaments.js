@@ -1,12 +1,12 @@
 require('dotenv').config({ path: 'tournaments.env' });
 
-const admin = require('firebase-admin');
+const adminTournaments = require('firebase-admin');
 
 // Verifique se o aplicativo Firebase não foi inicializado anteriormente
-if (!admin.apps.length) {
+if (!adminTournaments.apps.length) {
   // Inicialização do Firebase Admin SDK
-  admin.initializeApp({
-    credential: admin.credential.cert({
+  adminTournaments.initializeApp({
+    credential: adminTournaments.credential.cert({
       type: process.env.TYPE,
       project_id: process.env.PROJECT_ID,
       private_key_id: process.env.PRIVATE_KEY_ID,
@@ -22,4 +22,4 @@ if (!admin.apps.length) {
   }, 'tournamentsApp'); // Fornecendo um nome único para esta inicialização
 }
 
-module.exports = admin;
+module.exports = adminTournaments;

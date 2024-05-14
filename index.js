@@ -420,6 +420,19 @@ app.post('/login', authenticate, (req, res) => {
     });
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
