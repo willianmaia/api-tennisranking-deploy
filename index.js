@@ -552,25 +552,20 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogador = req.body;
 
-  // Obtém uma referência para o nó do torneio no banco de dados
-  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
-
-  // Verifica se o torneio já existe
-  torneioRef.once('value', snapshot => {
-    if (snapshot.exists()) {
-      // Obtém os dados do torneio
+  admin.database().ref(`torneios/${torneioId}`).once('value')
+    .then(snapshot => {
       const torneio = snapshot.val();
-
-      // Inicializa a lista de jogadores se ainda não existir
-      if (!torneio.jogadores) {
-        torneio.jogadores = [];
+      if (!torneio) {
+        res.status(404).json({ message: 'Torneio não encontrado' });
+        return;
       }
 
-      // Adiciona o novo jogador à lista de jogadores
-      torneio.jogadores.push(novoJogador);
+      let jogadores = torneio.jogadores || []; // Inicializa a lista de jogadores se ainda não existir
+      
+      jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores do torneio
 
-      // Atualiza os dados do torneio no banco de dados
-      torneioRef.set(torneio)
+      // Atualiza a lista de jogadores no banco de dados
+      admin.database().ref(`torneios/${torneioId}/jogadores`).set(jogadores)
         .then(() => {
           console.log('Novo jogador adicionado ao torneio:', novoJogador);
           res.status(201).json(novoJogador);
@@ -579,15 +574,13 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
           console.error('Erro ao adicionar jogador ao torneio:', err);
           res.status(500).json({ message: 'Erro interno do servidor ao adicionar jogador ao torneio', error: err });
         });
-    } else {
-      // Se o torneio não existir, retorna uma mensagem de erro
-      res.status(404).json({ message: 'Torneio não encontrado' });
-    }
-  }).catch((err) => {
-    console.error('Erro ao buscar torneio:', err);
-    res.status(500).json({ message: 'Erro interno do servidor ao buscar o torneio', error: err });
-  });
+    })
+    .catch(err => {
+      console.error('Erro ao obter informações do torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    });
 });
+
 
 
 // Rota para adicionar um jogo a um torneio
