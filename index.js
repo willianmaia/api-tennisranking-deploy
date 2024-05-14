@@ -10,6 +10,16 @@ const adminTournaments = require("./firebaseConfigTournaments");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+
+// Verifica se os bancos de dados foram inicializados corretamente
+if (adminRanking && adminTournaments) {
+  console.log('Bancos de dados iniciados com sucesso: adminRanking e adminTournaments');
+} else {
+  console.error('Erro ao inicializar os bancos de dados');
+}
+
+
+
 // Middleware para tratar o corpo das requisições como JSON
 app.use(bodyParser.json());
 
