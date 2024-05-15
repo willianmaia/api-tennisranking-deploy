@@ -594,21 +594,38 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
 });
 
 
-// Rota para adicionar um jogo a um torneio
-app.post('/torneios/:torneioId/jogos', authenticate, (req, res) => {
+// Rota para adicionar um confronto a um torneio
+app.post('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
-  const novoJogo = req.body;
+  const novosConfrontos = req.body;
+  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
 
-  admin.database().ref(`torneios/${torneioId}/jogos`).push(novoJogo)
+  torneioRef.once('value')
+    .then(snapshot => {
+      const torneio = snapshot.val();
+      if (torneio) {
+        // Verifica se o torneio já possui confrontos
+        const confrontos = torneio.confrontos || [];
+
+        // Concatena os novos confrontos com os existentes
+        const confrontosAtualizados = confrontos.concat(novosConfrontos);
+
+        // Atualiza os confrontos no banco de dados do torneio
+        return torneioRef.update({ confrontos: confrontosAtualizados });
+      } else {
+        throw new Error('Torneio não encontrado');
+      }
+    })
     .then(() => {
-      console.log('Novo jogo adicionado ao torneio:', novoJogo);
-      res.status(201).json(novoJogo);
+      console.log('Novos confrontos adicionados ao torneio:', novosConfrontos);
+      res.status(201).json(novosConfrontos);
     })
     .catch((err) => {
-      console.error('Erro ao adicionar jogo ao torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao adicionar jogo ao torneio', error: err });
+      console.error('Erro ao adicionar confrontos ao torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao adicionar confrontos ao torneio', error: err });
     });
 });
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
