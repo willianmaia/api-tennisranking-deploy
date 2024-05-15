@@ -424,7 +424,7 @@ app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
 
   // Verifica se todos os campos obrigatórios estão presentes
-  const camposObrigatorios = ['nome', 'data', 'horario', 'local'];
+  const camposObrigatorios = ['nome', 'data', 'horario', 'local', 'jogadores'];
   const camposFaltando = camposObrigatorios.filter(campo => !(campo in novoTorneio));
 
   if (camposFaltando.length > 0) {
