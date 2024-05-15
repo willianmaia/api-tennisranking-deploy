@@ -551,24 +551,27 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
 
   const torneioRef = admin.database().ref(`torneios/${torneioId}`);
 
-  torneioRef.transaction((torneio) => {
-    if (torneio) {
-      if (!torneio.jogadores) {
-        torneio.jogadores = []; // Inicializa a lista de jogadores se não existir
+  torneioRef.once('value')
+    .then(snapshot => {
+      const torneio = snapshot.val();
+      if (torneio) {
+        const jogadores = torneio.jogadores || [];
+        jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
+        return torneioRef.update({ jogadores }); // Atualiza o torneio com a lista de jogadores atualizada
+      } else {
+        throw new Error('Torneio não encontrado');
       }
-      torneio.jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
-    }
-    return torneio;
-  })
-  .then(() => {
-    console.log('Novo jogador adicionado ao torneio:', novoJogador);
-    res.status(201).json(novoJogador);
-  })
-  .catch((err) => {
-    console.error('Erro ao adicionar jogador ao torneio:', err);
-    res.status(500).json({ message: 'Erro interno do servidor ao adicionar jogador ao torneio', error: err });
-  });
+    })
+    .then(() => {
+      console.log('Novo jogador adicionado ao torneio:', novoJogador);
+      res.status(201).json(novoJogador);
+    })
+    .catch((err) => {
+      console.error('Erro ao adicionar jogador ao torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao adicionar jogador ao torneio', error: err });
+    });
 });
+
 
 
 
