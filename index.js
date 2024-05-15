@@ -424,7 +424,7 @@ app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
 
   // Verifica se todos os campos obrigatórios estão presentes
-  const camposObrigatorios = ['nome', 'data', 'horario', 'local', 'jogadores'];
+  const camposObrigatorios = ['nome', 'data', 'horario', 'local'];
   const camposFaltando = camposObrigatorios.filter(campo => !(campo in novoTorneio));
 
   if (camposFaltando.length > 0) {
@@ -445,38 +445,26 @@ app.post('/torneios', authenticate, (req, res) => {
           // Adiciona o id ao novo torneio
           novoTorneio.id = idTorneio;
 
-          // Obtém a lista de torneios existentes
-          admin.database().ref('torneios').once('value')
-            .then(snapshot => {
-              let torneios = snapshot.val() || []; // Se não houver torneios, começa com um array vazio
-            
-              // Adiciona o novo torneio à lista de torneios
-              torneios.push(novoTorneio);
-
-              // Salva a lista atualizada de torneios de volta no banco de dados
-              admin.database().ref('torneios').set(torneios)
-                .then(() => {
-                  console.log('Novo torneio adicionado:', novoTorneio);
-                  const resposta = { message: 'Torneio criado com sucesso' };
-                  res.status(201).json(resposta);
-                })
-                .catch((err) => {
-                  console.error('Erro ao escrever dados no Realtime Database:', err);
-                  res.status(500).json({ message: 'Erro interno do servidor' });
-                });
+          // Salva o novo torneio no banco de dados
+          admin.database().ref('torneios').child(idTorneio).set(novoTorneio)
+            .then(() => {
+              console.log('Novo torneio adicionado:', novoTorneio);
+              const resposta = { message: 'Torneio criado com sucesso' };
+              res.status(201).json(resposta);
             })
-            .catch(err => {
-              console.error('Erro ao obter torneios existentes:', err);
+            .catch((err) => {
+              console.error('Erro ao escrever dados no Realtime Database:', err);
               res.status(500).json({ message: 'Erro interno do servidor' });
             });
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Erro ao verificar se o nome do torneio já existe:', err);
         res.status(500).json({ message: 'Erro interno do servidor' });
       });
   }
 });
+
 
 
 
