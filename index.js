@@ -585,7 +585,8 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
     })
     .then(() => {
       console.log('Novo jogador adicionado ao torneio:', novoJogador);
-      res.status(201).json(novoJogador);
+      const resposta = { message: 'Jogador adicionado com sucesso' };
+      res.status(201).json(resposta);
     })
     .catch((err) => {
       console.error('Erro ao adicionar jogador ao torneio:', err);
@@ -618,7 +619,8 @@ app.post('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
     })
     .then(() => {
       console.log('Novos confrontos adicionados ao torneio:', novosConfrontos);
-      res.status(201).json(novosConfrontos);
+      const resposta = { message: 'Confronto adicionado com sucesso' };
+      res.status(201).json(resposta);
     })
     .catch((err) => {
       console.error('Erro ao adicionar confrontos ao torneio:', err);
