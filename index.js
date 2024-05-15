@@ -568,7 +568,7 @@ app.get('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
 app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogador = req.body;
-  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
+  const torneioRef = admin.database().ref(`torneios/0`);
 
   torneioRef.once('value')
     .then(snapshot => {
