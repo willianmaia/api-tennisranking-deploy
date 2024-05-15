@@ -628,6 +628,28 @@ app.post('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
     });
 });
 
+// Rota para buscar todos os confrontos de um torneio específico
+app.get('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
+  const torneioId = req.params.torneioId;
+  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
+
+  torneioRef.once('value')
+    .then(snapshot => {
+      const torneio = snapshot.val();
+      if (torneio) {
+        const confrontos = torneio.confrontos || []; // Se não existir a lista de confrontos, inicializa como um array vazio
+        res.status(200).json(confrontos);
+      } else {
+        throw new Error('Torneio não encontrado');
+      }
+    })
+    .catch((err) => {
+      console.error('Erro ao obter lista de confrontos do torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao obter lista de confrontos do torneio', error: err });
+    });
+});
+
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
