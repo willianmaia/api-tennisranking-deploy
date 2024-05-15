@@ -568,15 +568,15 @@ app.get('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
 app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novoJogador = req.body;
-  const torneioRef = admin.database().ref(`torneios/0`);
+  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
 
   torneioRef.once('value')
     .then(snapshot => {
       const torneio = snapshot.val();
       if (torneio) {
-        const jogadores = torneio.jogadores || []; // Se não existir a lista de jogadores, inicializa como um array vazio
-        jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
-        return torneioRef.update({ jogadores }); // Atualiza o torneio com a lista de jogadores atualizada
+        const jogadores = torneio.jogadores || [];
+        jogadores.push(novoJogador);
+        return torneioRef.update({ jogadores });
       } else {
         throw new Error('Torneio não encontrado');
       }
