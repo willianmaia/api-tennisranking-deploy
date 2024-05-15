@@ -555,13 +555,12 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
     .then(snapshot => {
       const torneio = snapshot.val();
 
-      if (!torneio) {
-        res.status(404).json({ message: 'Torneio não encontrado' });
-        return;
+      let jogadores = []; // Lista de jogadores a ser adicionada
+
+      if (torneio && torneio.jogadores) {
+        jogadores = torneio.jogadores; // Se existir, usa a lista de jogadores do torneio
       }
 
-      let jogadores = torneio.jogadores || []; // Obtém a lista de jogadores ou inicializa como vazia se não existir
-      
       jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
 
       // Atualiza o torneio com a lista de jogadores
@@ -580,6 +579,7 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor' });
     });
 });
+
 
 
 
