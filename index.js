@@ -419,55 +419,64 @@ app.post('/login', authenticate, (req, res) => {
     });
 });
 
+// Rota para criar um novo torneio
 app.post('/torneios', authenticate, (req, res) => {
-  const { nome, data, horario, local } = req.body;
+  const novoTorneio = req.body;
 
   // Verifica se todos os campos obrigatórios estão presentes
-  const camposObrigatorios = ['nome', 'data', 'horario', 'local'];
-  const camposFaltando = camposObrigatorios.filter(campo => !(campo in req.body));
+  const camposObrigatorios = ['nome', 'data', 'horario', 'local', 'jogadores'];
+  const camposFaltando = camposObrigatorios.filter(campo => !(campo in novoTorneio));
 
   if (camposFaltando.length > 0) {
     // Se algum campo obrigatório estiver faltando, responde com uma mensagem de erro
     res.status(400).json({ message: `Campos obrigatórios faltando: ${camposFaltando.join(', ')}` });
   } else {
-    const idTorneio = nome.replace(/\s+/g, '_'); // Substitui espaços por _
+    const nomeTorneio = novoTorneio.nome;
+    const idTorneio = nomeTorneio.replace(/\s+/g, '_'); // Substitui espaços por _
 
     // Verifica se o nome do torneio já existe
     admin.database().ref('torneios').orderByChild('id').equalTo(idTorneio).once('value')
       .then(snapshot => {
         if (snapshot.exists()) {
           // Se o nome do torneio já existe, responde com uma mensagem de erro
-          console.log('Nome do torneio já existe:', nome);
+          console.log('Nome do torneio já existe:', nomeTorneio);
           res.status(400).json({ message: 'O nome do torneio já existe' });
         } else {
-          // Cria um novo torneio na Realtime Database
-          admin.database().ref('torneios').child(idTorneio).set({
-            nome: nome,
-            data: data,
-            horario: horario,
-            local: local,
-            jogadores: [] // Lista de jogadores vazia
-          })
-          .then(() => {
-            console.log('Novo torneio adicionado:', { nome, data, horario, local });
-            const resposta = { message: 'Torneio criado com sucesso' };
-            res.status(201).json(resposta);
-          })
-          .catch((error) => {
-            // Tratar erros de criação de torneio na Realtime Database
-            console.error('Erro ao criar novo torneio na Realtime Database:', error);
-            res.status(500).json({ message: 'Erro interno do servidor' });
-          });
+          // Adiciona o id ao novo torneio
+          novoTorneio.id = idTorneio;
+
+          // Obtém a lista de torneios existentes
+          admin.database().ref('torneios').once('value')
+            .then(snapshot => {
+              let torneios = snapshot.val() || []; // Se não houver torneios, começa com um array vazio
+            
+              // Adiciona o novo torneio à lista de torneios
+              torneios.push(novoTorneio);
+
+              // Salva a lista atualizada de torneios de volta no banco de dados
+              admin.database().ref('torneios').set(torneios)
+                .then(() => {
+                  console.log('Novo torneio adicionado:', novoTorneio);
+                  const resposta = { message: 'Torneio criado com sucesso' };
+                  res.status(201).json(resposta);
+                })
+                .catch((err) => {
+                  console.error('Erro ao escrever dados no Realtime Database:', err);
+                  res.status(500).json({ message: 'Erro interno do servidor' });
+                });
+            })
+            .catch(err => {
+              console.error('Erro ao obter torneios existentes:', err);
+              res.status(500).json({ message: 'Erro interno do servidor' });
+            });
         }
       })
-      .catch((error) => {
-        // Tratar erros de consulta ao banco de dados
-        console.error('Erro ao verificar se o nome do torneio já existe:', error);
+      .catch(err => {
+        console.error('Erro ao verificar se o nome do torneio já existe:', err);
         res.status(500).json({ message: 'Erro interno do servidor' });
       });
   }
 });
-
 
 
 
