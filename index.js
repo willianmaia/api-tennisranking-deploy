@@ -496,17 +496,19 @@ app.get('/torneios', authenticate, (req, res) => {
 });
 
 // Rota para buscar um torneio pelo ID
-app.get('/torneios/:id', authenticate, (req, res) => {
-  const torneioId = req.params.id;
+app.get('/torneios/:indice', authenticate, (req, res) => {
+  const indice = req.params.indice;
   admin.database().ref('torneios').once('value')
     .then((snapshot) => {
       const torneios = snapshot.val();
       if (torneios) {
-        const torneioEncontrado = Object.values(torneios).find(torneio => torneio && torneio.id === torneioId);
-        if (torneioEncontrado) {
+        // Verifica se o índice fornecido é válido
+        if (indice >= 0 && indice < torneios.length) {
+          // Retorna o torneio correspondente ao índice
+          const torneioEncontrado = torneios[indice];
           res.status(200).json(torneioEncontrado);
         } else {
-          res.status(404).json({ message: 'Torneio não encontrado' });
+          res.status(404).json({ message: 'Torneio não encontrado para o índice fornecido' });
         }
       } else {
         res.status(404).json({ message: 'Nenhum torneio encontrado' });
