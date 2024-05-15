@@ -424,7 +424,7 @@ app.post('/torneios', authenticate, (req, res) => {
   const novoTorneio = req.body;
 
   // Verifica se todos os campos obrigatórios estão presentes
-  const camposObrigatorios = ['nome', 'data', 'horario', 'local', 'jogadores'];
+  const camposObrigatorios = ['nome', 'data', 'horario', 'local'];
   const camposFaltando = camposObrigatorios.filter(campo => !(campo in novoTorneio));
 
   if (camposFaltando.length > 0) {
@@ -444,7 +444,6 @@ app.post('/torneios', authenticate, (req, res) => {
         } else {
           // Adiciona o id ao novo torneio
           novoTorneio.id = idTorneio;
-		  novoTorneio.jogadores = [];
 
           // Obtém a lista de torneios existentes
           admin.database().ref('torneios').once('value')
