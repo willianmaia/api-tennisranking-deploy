@@ -574,10 +574,9 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
     .then(snapshot => {
       const torneio = snapshot.val();
       if (torneio) {
-        const jogadores = torneio.jogadores || {}; // Inicializa como um objeto vazio
-        const jogadorKey = `${novoJogador.nome}_${novoJogador.sobrenome}`; // Gera uma chave para o jogador com base no nome e sobrenome
-        jogadores[jogadorKey] = novoJogador; // Adiciona o novo jogador ao objeto de jogadores
-        return torneioRef.update({ jogadores }); // Atualiza o torneio com o objeto de jogadores atualizado
+        const jogadores = torneio.jogadores || []; // Se não existir a lista de jogadores, inicializa como um array vazio
+        jogadores.push(novoJogador); // Adiciona o novo jogador à lista de jogadores
+        return torneioRef.update({ jogadores }); // Atualiza o torneio com a lista de jogadores atualizada
       } else {
         throw new Error('Torneio não encontrado');
       }
@@ -591,7 +590,6 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor ao adicionar jogador ao torneio', error: err });
     });
 });
-
 
 
 // Rota para adicionar um jogo a um torneio
