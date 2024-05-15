@@ -444,40 +444,33 @@ app.post('/torneios', authenticate, (req, res) => {
         } else {
           // Adiciona o id ao novo torneio
           novoTorneio.id = idTorneio;
-		  novoTorneio.jogadores = [];
 
-          // Obtém a lista de torneios existentes
-          admin.database().ref('torneios').once('value')
-            .then(snapshot => {
-              let torneios = snapshot.val() || []; // Se não houver torneios, começa com um array vazio
-            
-              // Adiciona o novo torneio à lista de torneios
-              torneios.push(novoTorneio);
+          // Criar objeto com o novo torneio e a lista de jogadores vazia
+          const novoTorneioComJogadores = {
+            ...novoTorneio,
+            jogadores: []
+          };
 
-              // Salva a lista atualizada de torneios de volta no banco de dados
-              admin.database().ref('torneios').set(torneios)
-                .then(() => {
-                  console.log('Novo torneio adicionado:', novoTorneio);
-                  const resposta = { message: 'Torneio criado com sucesso' };
-                  res.status(201).json(resposta);
-                })
-                .catch((err) => {
-                  console.error('Erro ao escrever dados no Realtime Database:', err);
-                  res.status(500).json({ message: 'Erro interno do servidor' });
-                });
+          // Salva o novo torneio com a lista de jogadores vazia no banco de dados
+          admin.database().ref('torneios').child(idTorneio).set(novoTorneioComJogadores)
+            .then(() => {
+              console.log('Novo torneio adicionado:', novoTorneioComJogadores);
+              const resposta = { message: 'Torneio criado com sucesso' };
+              res.status(201).json(resposta);
             })
-            .catch(err => {
-              console.error('Erro ao obter torneios existentes:', err);
+            .catch((err) => {
+              console.error('Erro ao escrever dados no Realtime Database:', err);
               res.status(500).json({ message: 'Erro interno do servidor' });
             });
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Erro ao verificar se o nome do torneio já existe:', err);
         res.status(500).json({ message: 'Erro interno do servidor' });
       });
   }
 });
+
 
 
 
