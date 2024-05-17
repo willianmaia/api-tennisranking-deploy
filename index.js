@@ -628,6 +628,47 @@ app.post('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
     });
 });
 
+app.put('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
+  const torneioId = req.params.torneioId;
+  const novosConfrontos = req.body;
+  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
+
+  torneioRef.once('value')
+    .then(snapshot => {
+      const torneio = snapshot.val();
+      if (torneio) {
+        // Verifica se o torneio já possui confrontos
+        const confrontos = torneio.confrontos || [];
+
+        // Atualiza cada confronto existente com os novos dados
+        novosConfrontos.forEach(novoConfronto => {
+          const confrontoIndex = confrontos.findIndex(c => c.fase === novoConfronto.fase);
+          if (confrontoIndex !== -1) {
+            confrontos[confrontoIndex] = novoConfronto;
+          } else {
+            // Se não existe, adiciona o novo confronto à lista de confrontos
+            confrontos.push(novoConfronto);
+          }
+        });
+
+        // Atualiza os confrontos no banco de dados do torneio
+        return torneioRef.update({ confrontos: confrontos });
+      } else {
+        throw new Error('Torneio não encontrado');
+      }
+    })
+    .then(() => {
+      console.log('Confrontos atualizados no torneio:', novosConfrontos);
+      const resposta = { message: 'Confrontos atualizados com sucesso' };
+      res.status(200).json(resposta);
+    })
+    .catch((err) => {
+      console.error('Erro ao atualizar confrontos no torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos no torneio', error: err });
+    });
+});
+
+
 // Rota para buscar todos os confrontos de um torneio específico
 app.get('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
