@@ -630,7 +630,7 @@ app.post('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
 
 app.put('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
-  const novosConfrontos = req.body;
+  const novoConfronto = req.body; // Agora é um único confronto
   const torneioRef = admin.database().ref(`torneios/${torneioId}`);
 
   torneioRef.once('value')
@@ -638,18 +638,18 @@ app.put('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
       const torneio = snapshot.val();
       if (torneio) {
         // Verifica se o torneio já possui confrontos
-        const confrontos = torneio.confrontos || [];
+        let confrontos = torneio.confrontos || [];
 
-        // Atualiza cada confronto existente com os novos dados
-        novosConfrontos.forEach(novoConfronto => {
-          const confrontoIndex = confrontos.findIndex(c => c.fase === novoConfronto.fase);
-          if (confrontoIndex !== -1) {
-            confrontos[confrontoIndex] = novoConfronto;
-          } else {
-            // Se não existe, adiciona o novo confronto à lista de confrontos
-            confrontos.push(novoConfronto);
-          }
-        });
+        // Verifica se já existe um confronto com a mesma fase
+        const index = confrontos.findIndex(confronto => confronto.fase === novoConfronto.fase);
+
+        if (index !== -1) {
+          // Se já existe um confronto com a mesma fase, substitui-o pelo novo
+          confrontos[index] = novoConfronto;
+        } else {
+          // Caso contrário, adiciona o novo confronto à lista
+          confrontos = confrontos.concat([novoConfronto]);
+        }
 
         // Atualiza os confrontos no banco de dados do torneio
         return torneioRef.update({ confrontos: confrontos });
@@ -658,15 +658,16 @@ app.put('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
       }
     })
     .then(() => {
-      console.log('Confrontos atualizados no torneio:', novosConfrontos);
-      const resposta = { message: 'Confrontos atualizados com sucesso' };
-      res.status(200).json(resposta);
+      console.log('Confronto adicionado/atualizado ao torneio:', novoConfronto);
+      const resposta = { message: 'Confronto adicionado/atualizado com sucesso' };
+      res.status(201).json(resposta);
     })
     .catch((err) => {
-      console.error('Erro ao atualizar confrontos no torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos no torneio', error: err });
+      console.error('Erro ao adicionar/atualizar confronto ao torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao adicionar/atualizar confronto ao torneio', error: err });
     });
 });
+
 
 
 // Rota para buscar todos os confrontos de um torneio específico
