@@ -596,7 +596,7 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
 
 
 // Rota para adicionar um confronto a um torneio
-app.put('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
+app.post('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const novosConfrontos = req.body;
   const torneioRef = admin.database().ref(`torneios/${torneioId}`);
