@@ -598,35 +598,47 @@ app.post('/torneios/:torneioId/jogadores', authenticate, (req, res) => {
 // Rota para adicionar um confronto a um torneio
 app.post('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
-  const novosConfrontos = req.body;
-  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
-
-  torneioRef.once('value')
-    .then(snapshot => {
-      const torneio = snapshot.val();
-      if (torneio) {
-        // Verifica se o torneio já possui confrontos
-        const confrontos = torneio.confrontos || [];
-
-        // Concatena os novos confrontos com os existentes
-        const confrontosAtualizados = confrontos.concat(novosConfrontos);
-
-        // Atualiza os confrontos no banco de dados do torneio
-        return torneioRef.update({ confrontos: confrontosAtualizados });
-      } else {
-        throw new Error('Torneio não encontrado');
+  const novoConfronto = req.body;
+  const fase = novoConfronto.fase;
+  const confrontosRef = admin.database().ref(`confrontos/${torneioId}`);
+  
+  // Verifica se o torneio existe antes de adicionar o confronto
+  admin.database().ref(`torneios/${torneioId}`).once('value')
+    .then((snapshot) => {
+      if (!snapshot.exists()) {
+        console.log(`Torneio com ID ${torneioId} não encontrado`);
+        return res.status(404).json({ message: 'Torneio não encontrado' });
       }
+
+      // Busca os confrontos do torneio
+      return confrontosRef.once('value');
+    })
+    .then((snapshot) => {
+      // Verifica se já existe um confronto com a mesma fase
+      const confrontos = snapshot.val() || [];
+      const confrontoExistenteIndex = confrontos.findIndex(c => c.fase === fase);
+
+      if (confrontoExistenteIndex !== -1) {
+        // Se já existe, atualiza o confronto existente com os novos dados
+        confrontos[confrontoExistenteIndex] = novoConfronto;
+      } else {
+        // Se não existe, adiciona o novo confronto à lista de confrontos
+        confrontos.push(novoConfronto);
+      }
+
+      // Atualiza os confrontos no banco de dados
+      return confrontosRef.set(confrontos);
     })
     .then(() => {
-      console.log('Novos confrontos adicionados ao torneio:', novosConfrontos);
-      const resposta = { message: 'Confronto adicionado com sucesso' };
-      res.status(201).json(resposta);
+      console.log('Confronto adicionado/atualizado com sucesso:', novoConfronto);
+      res.status(201).json({ message: 'Confronto adicionado/atualizado com sucesso' });
     })
-    .catch((err) => {
-      console.error('Erro ao adicionar confrontos ao torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao adicionar confrontos ao torneio', error: err });
+    .catch((error) => {
+      console.error('Erro ao adicionar/atualizar confronto:', error);
+      res.status(500).json({ message: 'Erro interno do servidor ao adicionar/atualizar confronto', error });
     });
 });
+
 
 // Rota para buscar todos os confrontos de um torneio específico
 app.get('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
