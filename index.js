@@ -661,18 +661,19 @@ app.delete('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
         return res.status(404).json({ message: 'Torneio não encontrado' });
       }
 
-      // Remove todos os confrontos do torneio especificado
-      return confrontosRef.remove();
+      // Remove toda a lista de confrontos do torneio especificado
+      return confrontosRef.set(null);
     })
     .then(() => {
       console.log(`Confrontos do torneio com ID ${torneioId} excluídos com sucesso`);
       res.status(200).json({ message: `Confrontos do torneio com ID ${torneioId} excluídos com sucesso` });
     })
-    .catch((err) => {
-      console.error(`Erro ao excluir confrontos do torneio com ID ${torneioId}:`, err);
-      res.status(500).json({ message: 'Erro interno do servidor ao excluir confrontos', error: err });
+    .catch((error) => {
+      console.error(`Erro ao excluir confrontos do torneio com ID ${torneioId}:`, error);
+      res.status(500).json({ message: 'Erro interno do servidor ao excluir confrontos', error });
     });
 });
+
 
 
 
