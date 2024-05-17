@@ -649,7 +649,6 @@ app.get('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
     });
 });
 
-// Rota para excluir todos os confrontos de um determinado torneio (protegida por autenticação)
 app.delete('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
   const torneioId = req.params.torneioId;
   const confrontosRef = admin.database().ref(`confrontos/${torneioId}`);
@@ -674,7 +673,6 @@ app.delete('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor ao excluir confrontos', error: err });
     });
 });
-
 
 
 
