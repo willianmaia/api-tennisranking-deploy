@@ -196,7 +196,7 @@ app.post('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
           jogadores.push(novoJogador);
 
           // Salva a lista atualizada de jogadores de volta no banco de dados
-          jogadoresRef.set(jogadores)
+          jogadoresRef.set(/rankings/:rankingId/jogadores)
             .then(() => {
               console.log('Novo jogador adicionado:', novoJogador);
               res.status(201).json(novoJogador);
