@@ -166,11 +166,12 @@ app.get('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
   });
 });
 
+
+
 app.post('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
   const novoJogador = req.body;
-
   // Obtém a próxima ID sequencial como string
-  admin.database().ref('proximoId').transaction((currentValue) => {
+  admin.database().ref('/rankings/:rankingId/proximoId').transaction((currentValue) => {
     return (currentValue || 0) + 1;
   }, (error, committed, snapshot) => {
     if (error) {
@@ -184,7 +185,7 @@ app.post('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
       novoJogador.id = proximaIdString;
 
       // Adiciona o novo jogador ao banco de dados com a ID sequencial
-      const jogadoresRef = admin.database().ref('jogadores');
+      const jogadoresRef = admin.database().ref('/rankings/:rankingId/jogadores');
 
       // Obtém a lista de jogadores existentes
       jogadoresRef.once('value')
