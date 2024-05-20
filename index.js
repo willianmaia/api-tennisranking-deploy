@@ -97,6 +97,19 @@ app.post('/rankings', authenticate, (req, res) => {
   }
 });
 
+// Rota para buscar todos os rankings cadastrados
+app.get('/rankings', authenticate, (req, res) => {
+  admin.database().ref('rankings').once('value')
+    .then((snapshot) => {
+      const rankings = snapshot.val();
+      res.status(200).json(rankings);
+    })
+    .catch((err) => {
+      console.error('Erro ao buscar rankings:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar rankings', error: err });
+    });
+});
+
 // Rota para obter todos os jogadores (protegida por autenticação)
 app.get('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
   const jogadoresRef = admin.database().ref('jogadores');
