@@ -98,6 +98,269 @@ app.post('/rankings', authenticate, (req, res) => {
 });
 
 // Rota para obter todos os jogadores (protegida por autenticação)
+app.get('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
+  const jogadoresRef = admin.database().ref('jogadores');
+  jogadoresRef.once('value', (snapshot) => {
+    const jogadores = snapshot.val();
+    console.log('Jogadores encontrados:', jogadores);
+    res.json(jogadores);
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  });
+});
+
+// Rota para obter um jogador específico por ID (protegida por autenticação)
+app.get('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
+  const playerId = req.params.id;
+  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
+  jogadorRef.once('value', (snapshot) => {
+    const jogador = snapshot.val();
+    if (!jogador) {
+      console.log(`Jogador com ID ${playerId} não encontrado`);
+      return res.status(404).json({ message: 'Jogador não encontrado' });
+    }
+    console.log('Jogador encontrado:', jogador);
+    res.json(jogador);
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  });
+});
+
+app.post('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
+  const novoJogador = req.body;
+
+  // Obtém a próxima ID sequencial como string
+  admin.database().ref('proximoId').transaction((currentValue) => {
+    return (currentValue || 0) + 1;
+  }, (error, committed, snapshot) => {
+    if (error) {
+      console.error('Erro ao obter próxima ID:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    } else if (committed) {
+      // Converte a próxima ID sequencial para uma string
+      const proximaIdString = String(snapshot.val());
+
+      // Atribui a próxima ID sequencial como string ao novo jogador
+      novoJogador.id = proximaIdString;
+
+      // Adiciona o novo jogador ao banco de dados com a ID sequencial
+      const jogadoresRef = admin.database().ref('jogadores');
+
+      // Obtém a lista de jogadores existentes
+      jogadoresRef.once('value')
+        .then(snapshot => {
+          const jogadores = snapshot.val() || []; // Se não houver jogadores, começa com um array vazio
+          
+          // Adiciona o novo jogador à lista de jogadores
+          jogadores.push(novoJogador);
+
+          // Salva a lista atualizada de jogadores de volta no banco de dados
+          jogadoresRef.set(jogadores)
+            .then(() => {
+              console.log('Novo jogador adicionado:', novoJogador);
+              res.status(201).json(novoJogador);
+            })
+            .catch((err) => {
+              console.error('Erro ao escrever dados no Realtime Database:', err);
+              res.status(500).json({ message: 'Erro interno do servidor' });
+            });
+        })
+        .catch(err => {
+          console.error('Erro ao obter jogadores existentes:', err);
+          res.status(500).json({ message: 'Erro interno do servidor' });
+        });
+    } else {
+      console.error('Falha ao obter próxima ID sequencial');
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+});
+
+
+// Rota para excluir um jogador específico por ID (protegida por autenticação)
+app.delete('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
+  const playerId = req.params.id;
+  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
+
+  // Verifica se o jogador existe antes de excluí-lo
+  jogadorRef.once('value', (snapshot) => {
+    const jogador = snapshot.val();
+    if (!jogador) {
+      console.log(`Jogador com ID ${playerId} não encontrado`);
+      return res.status(404).json({ message: 'Jogador não encontrado' });
+    }
+
+    // Remove o jogador do banco de dados
+    jogadorRef.remove()
+      .then(() => {
+        console.log(`Jogador com ID ${playerId} excluído com sucesso`);
+		// Remove a referência do jogador do banco de dados
+		return admin.database().ref(`jogadores`).child(playerId).remove();
+      })
+	  .then(() => {
+		res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
+	  })
+      .catch((err) => {
+        console.error(`Erro ao excluir jogador com ID ${playerId}:`, err);
+        res.status(500).json({ message: 'Erro interno do servidor ao excluir jogador', error: err });
+      });
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
+    res.status(500).json({ message: 'Erro interno do servidor', error: err });
+  });
+});
+
+// Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
+app.get('/rankings/:rankingId/confrontos', authenticate, (req, res) => {
+  const confrontosRef = admin.database().ref('confrontos');
+  confrontosRef.once('value', (snapshot) => {
+    const confrontos = snapshot.val();
+    console.log('Confrontos encontrados:', confrontos);
+    res.json(confrontos);
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  });
+});
+
+// Rota para obter um confronto específico por ID (protegida por autenticação)
+app.get('/rankings/:rankingId/confrontos/:id', authenticate, (req, res) => {
+  const confrontoId = req.params.id;
+  const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
+  confrontoRef.once('value', (snapshot) => {
+    const confronto = snapshot.val();
+    if (!confronto) {
+      console.log(`Confronto com ID ${confrontoId} não encontrado`);
+      return res.status(404).json({ message: 'Confronto não encontrado' });
+    }
+    console.log('Confronto encontrado:', confronto);
+    res.json(confronto);
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  });
+});
+
+// Rota para atualizar confrontos para uma determinada rodada (protegida por autenticação)
+app.put('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) => {
+  const rodada = req.params.rodada;
+  const confrontosAtualizados = req.body;
+
+  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
+
+  // Atualiza os confrontos existentes com os dados recebidos
+  confrontosRef.set(confrontosAtualizados)
+    .then(() => {
+      console.log(`Confrontos da rodada ${rodada} atualizados com sucesso`);
+      res.status(200).json({ message: `Confrontos da rodada ${rodada} atualizados com sucesso` });
+    })
+    .catch((err) => {
+      console.error('Erro ao atualizar confrontos:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos', error: err });
+    });
+});
+
+// Rota para criar todos os confrontos de uma determinada rodada (protegida por autenticação)
+app.post('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) => {
+  const rodada = req.params.rodada;
+  const confrontosASalvar = req.body;
+
+  const confrontosRef = admin.database().ref('confrontos');
+
+  confrontosRef.once('value', (snapshot) => {
+    let confrontosAntigos = snapshot.val() || {};
+
+    // Verifica se a rodada já existe
+    if (confrontosAntigos.hasOwnProperty(rodada)) {
+      // Sobrescreve os confrontos antigos pelos novos
+      confrontosAntigos[rodada] = confrontosASalvar;
+
+      // Atualiza os confrontos no banco de dados
+      confrontosRef.set(confrontosAntigos)
+        .then(() => {
+          console.log(`Confrontos da rodada ${rodada} sobrescritos com sucesso:`, confrontosASalvar);
+          res.status(201).json({ message: `Confrontos da rodada ${rodada} sobrescritos com sucesso` });
+        })
+        .catch((err) => {
+          console.error('Erro ao salvar confrontos:', err);
+          res.status(500).json({ message: 'Erro interno do servidor ao salvar confrontos', error: err });
+        });
+    } else {
+      // Caso a rodada não exista, adiciona os novos confrontos normalmente
+      confrontosAntigos[rodada] = confrontosASalvar;
+
+      // Atualiza os confrontos no banco de dados
+      confrontosRef.set(confrontosAntigos)
+        .then(() => {
+          console.log(`Confrontos da rodada ${rodada} salvos com sucesso:`, confrontosASalvar);
+          res.status(201).json({ message: `Confrontos da rodada ${rodada} salvos com sucesso` });
+        })
+        .catch((err) => {
+          console.error('Erro ao salvar confrontos:', err);
+          res.status(500).json({ message: 'Erro interno do servidor ao salvar confrontos', error: err });
+        });
+    }
+  });
+});
+
+
+// Rota para excluir todos os confrontos de uma determinada rodada (protegida por autenticação)
+app.delete('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) => {
+  const rodada = req.params.rodada;
+
+  // Referência para os confrontos da rodada específica
+  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
+
+  // Verifica se a rodada existe antes de excluí-la
+  confrontosRef.once('value', (snapshot) => {
+    if (snapshot.exists()) {
+      // Remove os confrontos da rodada específica
+      confrontosRef.remove()
+        .then(() => {
+          console.log(`Confrontos da rodada ${rodada} excluídos com sucesso`);
+          res.status(200).json({ message: `Confrontos da rodada ${rodada} excluídos com sucesso` });
+        })
+        .catch((err) => {
+          console.error('Erro ao excluir confrontos:', err);
+          res.status(500).json({ message: 'Erro interno do servidor ao excluir confrontos', error: err });
+        });
+    } else {
+      console.log(`Confrontos da rodada ${rodada} não encontrados`);
+      res.status(404).json({ message: `Confrontos da rodada ${rodada} não encontrados` });
+    }
+  }).catch((err) => {
+    console.error('Erro ao ler dados do Realtime Database:', err);
+    res.status(500).json({ message: 'Erro interno do servidor', error: err });
+  });
+});
+
+
+
+// Rota para criar um novo confronto (protegida por autenticação)
+app.post('/rankings/:rankingId/confrontos', authenticate, (req, res) => {
+  const novoConfronto = req.body;
+
+  const confrontosRef = admin.database().ref('confrontos').push();
+  confrontosRef.set(novoConfronto)
+    .then(() => {
+      console.log('Novo confronto adicionado:', novoConfronto);
+      res.status(201).json(novoConfronto);
+    })
+    .catch((err) => {
+      console.error('Erro ao escrever dados no Realtime Database:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao criar o confronto', error: err });
+    });
+});
+
+
+
+
+
+//-------------------------------------------------------
+
+// Rota para obter todos os jogadores (protegida por autenticação)
 app.get('/jogadores', authenticate, (req, res) => {
   const jogadoresRef = admin.database().ref('jogadores');
   jogadoresRef.once('value', (snapshot) => {
@@ -353,6 +616,9 @@ app.post('/confrontos', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor ao criar o confronto', error: err });
     });
 });
+
+
+//-------------------------------------------------------------------------
 
 // Rota para atualizar dados de um usuário (protegida por autenticação)
 app.post('/updateUserData', authenticate, (req, res) => {
