@@ -150,21 +150,28 @@ app.get('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
 
 // Rota para obter um jogador específico por ID (protegida por autenticação)
 app.get('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
+  const rankingId = req.params.rankingId;
   const playerId = req.params.id;
-  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
-  jogadorRef.once('value', (snapshot) => {
-    const jogador = snapshot.val();
-    if (!jogador) {
-      console.log(`Jogador com ID ${playerId} não encontrado`);
-      return res.status(404).json({ message: 'Jogador não encontrado' });
-    }
-    console.log('Jogador encontrado:', jogador);
-    res.json(jogador);
-  }).catch((err) => {
-    console.error('Erro ao ler dados do Realtime Database:', err);
-    res.status(500).json({ message: 'Erro interno do servidor' });
-  });
+
+  // Referência correta para o jogador dentro do ranking
+  const jogadorRef = admin.database().ref(`/rankings/${rankingId}/jogadores/${playerId}`);
+
+  jogadorRef.once('value')
+    .then((snapshot) => {
+      const jogador = snapshot.val();
+      if (!jogador) {
+        console.log(`Jogador com ID ${playerId} não encontrado no ranking ${rankingId}`);
+        return res.status(404).json({ message: 'Jogador não encontrado' });
+      }
+      console.log('Jogador encontrado:', jogador);
+      res.json(jogador);
+    })
+    .catch((err) => {
+      console.error('Erro ao ler dados do Realtime Database:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    });
 });
+
 
 
 
