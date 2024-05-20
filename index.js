@@ -137,16 +137,27 @@ app.get('/rankings/:indice', authenticate, (req, res) => {
 
 // Rota para obter todos os jogadores (protegida por autenticação)
 app.get('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
-  const jogadoresRef = admin.database().ref('/rankings/:rankingId/jogadores');
-  jogadoresRef.once('value', (snapshot) => {
-    const jogadores = snapshot.val();
-    console.log('Jogadores encontrados:', jogadores);
-    res.json(jogadores);
-  }).catch((err) => {
-    console.error('Erro ao ler dados do Realtime Database:', err);
-    res.status(500).json({ message: 'Erro interno do servidor' });
-  });
+  const rankingId = req.params.rankingId;
+
+  // Referência correta para os jogadores dentro do ranking
+  const jogadoresRef = admin.database().ref(`/rankings/${rankingId}/jogadores`);
+
+  jogadoresRef.once('value')
+    .then((snapshot) => {
+      const jogadores = snapshot.val();
+      if (!jogadores) {
+        console.log(`Nenhum jogador encontrado no ranking ${rankingId}`);
+        return res.status(404).json({ message: 'Nenhum jogador encontrado' });
+      }
+      console.log('Jogadores encontrados:', jogadores);
+      res.json(jogadores);
+    })
+    .catch((err) => {
+      console.error('Erro ao ler dados do Realtime Database:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    });
 });
+
 
 // Rota para obter um jogador específico por ID (protegida por autenticação)
 app.get('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
