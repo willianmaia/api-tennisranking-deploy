@@ -110,6 +110,31 @@ app.get('/rankings', authenticate, (req, res) => {
     });
 });
 
+// Rota para buscar um ranking pelo ID
+app.get('/rankings/:indice', authenticate, (req, res) => {
+  const indice = req.params.indice;
+  admin.database().ref('rankings').once('value')
+    .then((snapshot) => {
+      const rankings = snapshot.val();
+      if (rankings) {
+        // Verifica se o índice fornecido é válido
+        if (indice >= 0 && indice < rankings.length) {
+          // Retorna o ranking correspondente ao índice
+          const rankingEncontrado = rankings[indice];
+          res.status(200).json(rankingEncontrado);
+        } else {
+          res.status(404).json({ message: 'Ranking não encontrado para o índice fornecido' });
+        }
+      } else {
+        res.status(404).json({ message: 'Nenhum ranking encontrado' });
+      }
+    })
+    .catch((err) => {
+      console.error('Erro ao buscar ranking:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar os ranking', error: err });
+    });
+});
+
 // Rota para obter todos os jogadores (protegida por autenticação)
 app.get('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
   const jogadoresRef = admin.database().ref('jogadores');
