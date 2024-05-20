@@ -38,6 +38,65 @@ const authenticate = (req, res, next) => {
   }
 };
 
+// Rota para criar um novo ranking
+app.post('/rankings', authenticate, (req, res) => {
+  const novoRanking = req.body;
+
+  // Verifica se todos os campos obrigatórios estão presentes
+  const camposObrigatorios = ['nome'];
+  const camposFaltando = camposObrigatorios.filter(campo => !(campo in novoRanking));
+
+  if (camposFaltando.length > 0) {
+    // Se algum campo obrigatório estiver faltando, responde com uma mensagem de erro
+    res.status(400).json({ message: `Campos obrigatórios faltando: ${camposFaltando.join(', ')}` });
+  } else {
+    const nomeRanking = novoRanking.nome;
+    const idRanking = nomeRanking.replace(/\s+/g, '_'); // Substitui espaços por _
+
+    // Verifica se o nome do ranking já existe
+    admin.database().ref('rankings').orderByChild('id').equalTo(idRanking).once('value')
+      .then(snapshot => {
+        if (snapshot.exists()) {
+          // Se o nome do ranking já existe, responde com uma mensagem de erro
+          console.log('Nome do ranking já existe:', nomeRanking);
+          res.status(400).json({ message: 'O nome do ranking já existe' });
+        } else {
+          // Adiciona o id ao novo ranking
+          novoRanking.id = idRanking;
+
+          // Obtém a lista de rankings existentes
+          admin.database().ref('ranking').once('value')
+            .then(snapshot => {
+              let rankings = snapshot.val() || []; // Se não houver rankngs, começa com um array vazio
+            
+              // Adiciona o novo ranking à lista de rankings
+              rankings.push(novoRanking);
+
+              // Salva a lista atualizada de rankings de volta no banco de dados
+              admin.database().ref('rankings').set(rankings)
+                .then(() => {
+                  console.log('Novo ranking adicionado:', novoRanking);
+                  const resposta = { message: 'Ranking criado com sucesso' };
+                  res.status(201).json(resposta);
+                })
+                .catch((err) => {
+                  console.error('Erro ao escrever dados no Realtime Database:', err);
+                  res.status(500).json({ message: 'Erro interno do servidor' });
+                });
+            })
+            .catch(err => {
+              console.error('Erro ao obter rankings existentes:', err);
+              res.status(500).json({ message: 'Erro interno do servidor' });
+            });
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao verificar se o nome do ranking já existe:', err);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+      });
+  }
+});
+
 // Rota para obter todos os jogadores (protegida por autenticação)
 app.get('/jogadores', authenticate, (req, res) => {
   const jogadoresRef = admin.database().ref('jogadores');
