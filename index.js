@@ -238,11 +238,11 @@ app.post('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
 });
 
 
-
 // Rota para excluir um jogador específico por ID (protegida por autenticação)
 app.delete('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
+  const rankingId = req.params.rankingId; // Obtém o ID do ranking da URL
   const playerId = req.params.id;
-  const jogadorRef = admin.database().ref(`jogadores/${playerId}`);
+  const jogadorRef = admin.database().ref(`rankings/${rankingId}/jogadores/${playerId}`);
 
   // Verifica se o jogador existe antes de excluí-lo
   jogadorRef.once('value', (snapshot) => {
@@ -256,12 +256,12 @@ app.delete('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
     jogadorRef.remove()
       .then(() => {
         console.log(`Jogador com ID ${playerId} excluído com sucesso`);
-		// Remove a referência do jogador do banco de dados
-		return admin.database().ref(`jogadores`).child(playerId).remove();
+        // Remove a referência do jogador do banco de dados
+        return admin.database().ref(`jogadores`).child(playerId).remove();
       })
-	  .then(() => {
-		res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
-	  })
+      .then(() => {
+        res.status(200).json({ message: `Jogador com ID ${playerId} excluído com sucesso` });
+      })
       .catch((err) => {
         console.error(`Erro ao excluir jogador com ID ${playerId}:`, err);
         res.status(500).json({ message: 'Erro interno do servidor ao excluir jogador', error: err });
@@ -272,9 +272,11 @@ app.delete('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
   });
 });
 
+
 // Rota para obter todos os confrontos organizados por rodadas (protegida por autenticação)
 app.get('/rankings/:rankingId/confrontos', authenticate, (req, res) => {
-  const confrontosRef = admin.database().ref('confrontos');
+  const rankingId = req.params.rankingId; // Obtém o ID do ranking da URL
+  const confrontosRef = admin.database().ref(`rankings/${rankingId}/confrontos`);
   confrontosRef.once('value', (snapshot) => {
     const confrontos = snapshot.val();
     console.log('Confrontos encontrados:', confrontos);
@@ -285,10 +287,13 @@ app.get('/rankings/:rankingId/confrontos', authenticate, (req, res) => {
   });
 });
 
+
 // Rota para obter um confronto específico por ID (protegida por autenticação)
 app.get('/rankings/:rankingId/confrontos/:id', authenticate, (req, res) => {
-  const confrontoId = req.params.id;
-  const confrontoRef = admin.database().ref(`confrontos/${confrontoId}`);
+  const confrontoId = req.params.id; // Obtém o ID do confronto da URL
+  const rankingId = req.params.rankingId; // Obtém o ID do ranking da URL
+
+  const confrontoRef = admin.database().ref(`rankings/${rankingId}/confrontos/${confrontoId}`);
   confrontoRef.once('value', (snapshot) => {
     const confronto = snapshot.val();
     if (!confronto) {
@@ -303,12 +308,14 @@ app.get('/rankings/:rankingId/confrontos/:id', authenticate, (req, res) => {
   });
 });
 
+
 // Rota para atualizar confrontos para uma determinada rodada (protegida por autenticação)
-app.put('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) => {
-  const rodada = req.params.rodada;
+app.put('/rankings/:rankingId/confrontos/:id', authenticate, (req, res) => {
+  const rodada = req.params.id; // Obtém o ID da rodada da URL
+  const rankingId = req.params.rankingId; // Obtém o ID do ranking da URL
   const confrontosAtualizados = req.body;
 
-  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
+  const confrontosRef = admin.database().ref(`rankings/${rankingId}/confrontos/${rodada}`);
 
   // Atualiza os confrontos existentes com os dados recebidos
   confrontosRef.set(confrontosAtualizados)
@@ -322,12 +329,14 @@ app.put('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) => {
     });
 });
 
+
 // Rota para criar todos os confrontos de uma determinada rodada (protegida por autenticação)
 app.post('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) => {
+  const rankingId = req.params.rankingId; // Obtém o ID do ranking da URL
   const rodada = req.params.rodada;
   const confrontosASalvar = req.body;
 
-  const confrontosRef = admin.database().ref('confrontos');
+  const confrontosRef = admin.database().ref(`rankings/${rankingId}/confrontos`);
 
   confrontosRef.once('value', (snapshot) => {
     let confrontosAntigos = snapshot.val() || {};
@@ -366,12 +375,14 @@ app.post('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) => 
 });
 
 
+
 // Rota para excluir todos os confrontos de uma determinada rodada (protegida por autenticação)
 app.delete('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) => {
+  const rankingId = req.params.rankingId; // Obtém o ID do ranking da URL
   const rodada = req.params.rodada;
 
-  // Referência para os confrontos da rodada específica
-  const confrontosRef = admin.database().ref(`confrontos/${rodada}`);
+  // Referência para os confrontos da rodada específica no contexto do ranking
+  const confrontosRef = admin.database().ref(`rankings/${rankingId}/confrontos/${rodada}`);
 
   // Verifica se a rodada existe antes de excluí-la
   confrontosRef.once('value', (snapshot) => {
@@ -400,9 +411,10 @@ app.delete('/rankings/:rankingId/confrontos/:rodada', authenticate, (req, res) =
 
 // Rota para criar um novo confronto (protegida por autenticação)
 app.post('/rankings/:rankingId/confrontos', authenticate, (req, res) => {
+  const rankingId = req.params.rankingId; // Obtém o ID do ranking da URL
   const novoConfronto = req.body;
 
-  const confrontosRef = admin.database().ref('confrontos').push();
+  const confrontosRef = admin.database().ref(`rankings/${rankingId}/confrontos`).push();
   confrontosRef.set(novoConfronto)
     .then(() => {
       console.log('Novo confronto adicionado:', novoConfronto);
