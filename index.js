@@ -137,7 +137,7 @@ app.get('/rankings/:indice', authenticate, (req, res) => {
 
 // Rota para obter todos os jogadores (protegida por autenticação)
 app.get('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
-  const jogadoresRef = admin.database().ref('jogadores');
+  const jogadoresRef = admin.database().ref('/rankings/:rankingId/jogadores');
   jogadoresRef.once('value', (snapshot) => {
     const jogadores = snapshot.val();
     console.log('Jogadores encontrados:', jogadores);
