@@ -169,9 +169,10 @@ app.get('/rankings/:rankingId/jogadores/:id', authenticate, (req, res) => {
 
 
 app.post('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
+  const rankingId = req.params.rankingId;
   const novoJogador = req.body;
   // Obtém a próxima ID sequencial como string
-  admin.database().ref('/rankings/:rankingId/proximoId').transaction((currentValue) => {
+  admin.database().ref('/rankings/${rankingId}/proximoId').transaction((currentValue) => {
     return (currentValue || 0) + 1;
   }, (error, committed, snapshot) => {
     if (error) {
@@ -185,7 +186,7 @@ app.post('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
       novoJogador.id = proximaIdString;
 
       // Adiciona o novo jogador ao banco de dados com a ID sequencial
-      const jogadoresRef = admin.database().ref('/rankings/:rankingId/jogadores');
+      const jogadoresRef = admin.database().ref('/rankings/${rankingId}/jogadores');
 
       // Obtém a lista de jogadores existentes
       jogadoresRef.once('value')
@@ -196,7 +197,7 @@ app.post('/rankings/:rankingId/jogadores', authenticate, (req, res) => {
           jogadores.push(novoJogador);
 
           // Salva a lista atualizada de jogadores de volta no banco de dados
-          jogadoresRef.set(/rankings/:rankingId/jogadores)
+          jogadoresRef.set(jogadores)
             .then(() => {
               console.log('Novo jogador adicionado:', novoJogador);
               res.status(201).json(novoJogador);
