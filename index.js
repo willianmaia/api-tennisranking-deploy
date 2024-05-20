@@ -65,7 +65,7 @@ app.post('/rankings', authenticate, (req, res) => {
           novoRanking.id = idRanking;
 
           // Obtém a lista de rankings existentes
-          admin.database().ref('ranking').once('value')
+          admin.database().ref('rankings').once('value')
             .then(snapshot => {
               let rankings = snapshot.val() || []; // Se não houver rankngs, começa com um array vazio
             
