@@ -1146,6 +1146,36 @@ app.post('/alunos', authenticate, (req, res) => {
   }
 });
 
+// Rota para obter todos os alunos
+app.get('/alunos', authenticate, (req, res) => {
+  admin.database().ref('alunos').once('value')
+    .then(snapshot => {
+      const alunos = snapshot.val() || [];
+      const nomesAlunos = alunos.map(aluno => aluno.nome);
+      res.status(200).json(nomesAlunos);
+    })
+    .catch(err => {
+      console.error('Erro ao obter alunos:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    });
+});
+
+// Rota para obter alunos por categoria
+app.get('/alunos/:categoria', authenticate, (req, res) => {
+  const categoria = req.params.categoria.toLowerCase();
+
+  admin.database().ref('alunos').once('value')
+    .then(snapshot => {
+      const alunos = snapshot.val() || [];
+      const alunosFiltrados = alunos.filter(aluno => aluno.categoria.toLowerCase() === categoria);
+      const nomesAlunos = alunosFiltrados.map(aluno => aluno.nome);
+      res.status(200).json(nomesAlunos);
+    })
+    .catch(err => {
+      console.error('Erro ao obter alunos por categoria:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    });
+});
 
 
 // Iniciar o servidor
