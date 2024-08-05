@@ -876,9 +876,6 @@ app.post('/torneios', authenticate, (req, res) => {
 });
 
 
-
-
-
 // Rota para buscar todos os torneios cadastrados
 app.get('/torneios', authenticate, (req, res) => {
   admin.database().ref('torneios').once('value')
@@ -1087,6 +1084,68 @@ app.get('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
       res.status(500).json({ message: 'Erro interno do servidor ao obter lista de confrontos do torneio', error: err });
     });
 });
+
+//---------------------------------------------------------------------------
+
+// Rota para criar um novo aluno
+app.post('/alunos', authenticate, (req, res) => {
+  const novoAluno = req.body;
+
+  // Verifica se todos os campos obrigatórios estão presentes
+  const camposObrigatorios = ['nome', 'categoria'];
+  const camposFaltando = camposObrigatorios.filter(campo => !(campo in novoAluno));
+
+  if (camposFaltando.length > 0) {
+    // Se algum campo obrigatório estiver faltando, responde com uma mensagem de erro
+    res.status(400).json({ message: `Campos obrigatórios faltando: ${camposFaltando.join(', ')}` });
+  } else {
+    const nomeAluno = novoAluno.nome;
+    const idAluno = nomeAluno.replace(/\s+/g, '_'); // Substitui espaços por _
+
+    // Verifica se o nome do aluno já existe
+    admin.database().ref('alunos').orderByChild('id').equalTo(idAluno).once('value')
+      .then(snapshot => {
+        if (snapshot.exists()) {
+          // Se o nome do aluno já existe, responde com uma mensagem de erro
+          console.log('Nome do aluno já existe:', nomeAluno);
+          res.status(400).json({ message: 'O nome do aluno já existe' });
+        } else {
+          // Adiciona o id ao novo aluno
+          novoAluno.id = idAluno;
+
+          // Obtém a lista de alunos existentes
+          admin.database().ref('alunos').once('value')
+            .then(snapshot => {
+              let alunos = snapshot.val() || []; // Se não houver alunos, começa com um array vazio
+            
+              // Adiciona o novo aluno à lista de alunos
+              alunos.push(novoAluno);
+
+              // Salva a lista atualizada de alunos de volta no banco de dados
+              admin.database().ref('alunos').set(alunos)
+                .then(() => {
+                  console.log('Novo aluno adicionado:', novoAluno);
+                  const resposta = { message: 'Aluno criado com sucesso' };
+                  res.status(201).json(resposta);
+                })
+                .catch((err) => {
+                  console.error('Erro ao escrever dados no Realtime Database:', err);
+                  res.status(500).json({ message: 'Erro interno do servidor' });
+                });
+            })
+            .catch(err => {
+              console.error('Erro ao obter alunos existentes:', err);
+              res.status(500).json({ message: 'Erro interno do servidor' });
+            });
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao verificar se o nome do aluno já existe:', err);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+      });
+  }
+});
+
 
 
 // Iniciar o servidor
