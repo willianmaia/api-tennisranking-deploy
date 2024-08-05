@@ -1177,6 +1177,39 @@ app.get('/alunos/:categoria', authenticate, (req, res) => {
     });
 });
 
+// Rota para deletar um aluno pelo nome
+app.delete('/alunos/:nome', authenticate, (req, res) => {
+  const nomeAluno = req.params.nome;
+  const idAluno = nomeAluno.replace(/\s+/g, '_'); // Substitui espaços por _ para obter o ID do aluno
+
+  // Verifica se o aluno existe
+  admin.database().ref('alunos').orderByChild('id').equalTo(idAluno).once('value')
+    .then(snapshot => {
+      if (snapshot.exists()) {
+        // Se o aluno existe, remove-o do banco de dados
+        snapshot.forEach(childSnapshot => {
+          childSnapshot.ref.remove()
+            .then(() => {
+              console.log('Aluno removido:', nomeAluno);
+              res.status(200).json({ message: 'Aluno removido com sucesso' });
+            })
+            .catch(err => {
+              console.error('Erro ao remover aluno do Realtime Database:', err);
+              res.status(500).json({ message: 'Erro interno do servidor' });
+            });
+        });
+      } else {
+        // Se o aluno não existe, responde com uma mensagem de erro
+        console.log('Aluno não encontrado:', nomeAluno);
+        res.status(404).json({ message: 'Aluno não encontrado' });
+      }
+    })
+    .catch(err => {
+      console.error('Erro ao verificar se o aluno existe:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    });
+});
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
