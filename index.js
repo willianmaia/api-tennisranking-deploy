@@ -1210,6 +1210,41 @@ app.delete('/alunos/:nome', authenticate, (req, res) => {
     });
 });
 
+// Rota para salvar uma anotação para um aluno específico
+app.put('/alunos/:nome/anotacao', authenticate, (req, res) => {
+  const nomeAluno = req.params.nome;
+  const anotacao = req.body.anotacao;
+  const idAluno = nomeAluno.replace(/\s+/g, '_'); // Substitui espaços por _ para obter o ID do aluno
+
+  admin.database().ref('alunos').orderByChild('id').equalTo(idAluno).once('value')
+    .then(snapshot => {
+      if (snapshot.exists()) {
+        // Se o aluno existe, atualiza a anotação
+        snapshot.forEach(childSnapshot => {
+          const alunoRef = childSnapshot.ref;
+          alunoRef.update({ anotacao: anotacao })
+            .then(() => {
+              console.log('Anotação atualizada para o aluno:', nomeAluno);
+              res.status(200).json({ message: 'Anotação atualizada com sucesso' });
+            })
+            .catch(err => {
+              console.error('Erro ao atualizar anotação do aluno:', err);
+              res.status(500).json({ message: 'Erro interno do servidor' });
+            });
+        });
+      } else {
+        // Se o aluno não existe, responde com uma mensagem de erro
+        console.log('Aluno não encontrado:', nomeAluno);
+        res.status(404).json({ message: 'Aluno não encontrado' });
+      }
+    })
+    .catch(err => {
+      console.error('Erro ao verificar se o aluno existe:', err);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    });
+});
+
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
