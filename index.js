@@ -889,6 +889,26 @@ app.get('/torneios', authenticate, (req, res) => {
     });
 });
 
+// Rota para obter a lista de jogos gerada
+app.get('/torneios/listajogos', authenticate, (req, res) => {
+  const confrontosRef = admin.database().ref('confrontos'); // Referência fixa para os confrontos
+
+  confrontosRef.once('value')
+    .then(snapshot => {
+      const listaConfrontos = snapshot.val();
+      if (listaConfrontos && listaConfrontos.listaConfrontos) {
+        res.status(200).json({ confrontos: listaConfrontos.listaConfrontos });
+      } else {
+        res.status(404).json({ message: 'Nenhum confronto encontrado' });
+      }
+    })
+    .catch((err) => {
+      console.error('Erro ao obter confrontos:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar confrontos', error: err });
+    });
+});
+
+
 // Rota para buscar um torneio pelo ID
 app.get('/torneios/:indice', authenticate, (req, res) => {
   const indice = req.params.indice;
@@ -1105,26 +1125,6 @@ app.put('/torneios/listajogos', authenticate, (req, res) => {
     .catch((err) => {
       console.error('Erro ao atualizar confrontos:', err);
       res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos', error: err });
-    });
-});
-
-
-// Rota para obter a lista de jogos gerada
-app.get('/torneios/listajogos', authenticate, (req, res) => {
-  const confrontosRef = admin.database().ref('confrontos'); // Referência fixa para os confrontos
-
-  confrontosRef.once('value')
-    .then(snapshot => {
-      const listaConfrontos = snapshot.val();
-      if (listaConfrontos && listaConfrontos.listaConfrontos) {
-        res.status(200).json({ confrontos: listaConfrontos.listaConfrontos });
-      } else {
-        res.status(404).json({ message: 'Nenhum confronto encontrado' });
-      }
-    })
-    .catch((err) => {
-      console.error('Erro ao obter confrontos:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao buscar confrontos', error: err });
     });
 });
 
