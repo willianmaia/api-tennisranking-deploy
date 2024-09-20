@@ -1088,62 +1088,45 @@ app.get('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
 // Rota para salvar a lista de jogos gerada
 app.put('/torneios/listajogos', authenticate, (req, res) => {
   const listaConfrontos = req.body.confrontos; // Espera uma lista de strings
-  const torneioId = req.body.torneioId; // Opcional: se você quiser associar à um torneio específico
-  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
+  const confrontosRef = admin.database().ref('confrontos'); // Referência fixa para os confrontos
 
   // Verifica se a lista de confrontos foi enviada
   if (!Array.isArray(listaConfrontos) || listaConfrontos.length === 0) {
     return res.status(400).json({ message: 'Lista de confrontos inválida' });
   }
 
-  torneioRef.once('value')
-    .then(snapshot => {
-      const torneio = snapshot.val();
-      if (torneio) {
-        // Atualiza os confrontos no banco de dados do torneio
-        return torneioRef.update({ confrontos: listaConfrontos });
-      } else {
-        throw new Error('Torneio não encontrado');
-      }
-    })
+  // Atualiza a lista de confrontos no banco de dados
+  confrontosRef
+    .set({ listaConfrontos })
     .then(() => {
-      console.log('Confrontos atualizados no torneio:', listaConfrontos);
-      const resposta = { message: 'Confrontos atualizados com sucesso' };
-      res.status(200).json(resposta);
+      console.log('Confrontos atualizados com sucesso:', listaConfrontos);
+      res.status(200).json({ message: 'Confrontos atualizados com sucesso' });
     })
     .catch((err) => {
-      console.error('Erro ao atualizar confrontos do torneio:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos do torneio', error: err });
+      console.error('Erro ao atualizar confrontos:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos', error: err });
     });
 });
 
-// Rota para obter a lista de jogos (confrontos) salva
+
+// Rota para obter a lista de jogos gerada
 app.get('/torneios/listajogos', authenticate, (req, res) => {
-  const torneiosRef = admin.database().ref('torneios');
+  const confrontosRef = admin.database().ref('confrontos'); // Referência fixa para os confrontos
 
-  torneiosRef.once('value')
+  confrontosRef.once('value')
     .then(snapshot => {
-      const torneios = snapshot.val();
-
-      if (!torneios) {
-        return res.status(404).json({ message: 'Nenhum torneio encontrado' });
+      const listaConfrontos = snapshot.val();
+      if (listaConfrontos && listaConfrontos.listaConfrontos) {
+        res.status(200).json({ confrontos: listaConfrontos.listaConfrontos });
+      } else {
+        res.status(404).json({ message: 'Nenhum confronto encontrado' });
       }
-
-      // Mapeia cada torneio para pegar a lista de confrontos
-      const resultado = Object.keys(torneios).map(torneioId => {
-        const { confrontos } = torneios[torneioId];
-        return { torneioId, confrontos: confrontos || [] }; // Se não houver confrontos, retorna uma lista vazia
-      });
-
-      res.status(200).json({ torneios: resultado });
     })
     .catch((err) => {
-      console.error('Erro ao buscar confrontos dos torneios:', err);
-      res.status(500).json({ message: 'Erro interno do servidor ao buscar confrontos dos torneios', error: err });
+      console.error('Erro ao obter confrontos:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar confrontos', error: err });
     });
 });
-
-
 
 
 //---------------------------------------------------------------------------
