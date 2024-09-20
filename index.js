@@ -1085,6 +1085,67 @@ app.get('/torneios/:torneioId/confrontos', authenticate, (req, res) => {
     });
 });
 
+// Rota para salvar a lista de jogos gerada
+app.put('/torneios/listajogos', authenticate, (req, res) => {
+  const listaConfrontos = req.body.confrontos; // Espera uma lista de strings
+  const torneioId = req.body.torneioId; // Opcional: se você quiser associar à um torneio específico
+  const torneioRef = admin.database().ref(`torneios/${torneioId}`);
+
+  // Verifica se a lista de confrontos foi enviada
+  if (!Array.isArray(listaConfrontos) || listaConfrontos.length === 0) {
+    return res.status(400).json({ message: 'Lista de confrontos inválida' });
+  }
+
+  torneioRef.once('value')
+    .then(snapshot => {
+      const torneio = snapshot.val();
+      if (torneio) {
+        // Atualiza os confrontos no banco de dados do torneio
+        return torneioRef.update({ confrontos: listaConfrontos });
+      } else {
+        throw new Error('Torneio não encontrado');
+      }
+    })
+    .then(() => {
+      console.log('Confrontos atualizados no torneio:', listaConfrontos);
+      const resposta = { message: 'Confrontos atualizados com sucesso' };
+      res.status(200).json(resposta);
+    })
+    .catch((err) => {
+      console.error('Erro ao atualizar confrontos do torneio:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao atualizar confrontos do torneio', error: err });
+    });
+});
+
+// Rota para obter a lista de jogos (confrontos) salva
+app.get('/torneios/listajogos', authenticate, (req, res) => {
+  const torneiosRef = admin.database().ref('torneios');
+
+  torneiosRef.once('value')
+    .then(snapshot => {
+      const torneios = snapshot.val();
+
+      if (!torneios) {
+        return res.status(404).json({ message: 'Nenhum torneio encontrado' });
+      }
+
+      // Mapeia cada torneio para pegar a lista de confrontos
+      const resultado = Object.keys(torneios).map(torneioId => {
+        const { confrontos } = torneios[torneioId];
+        return { torneioId, confrontos: confrontos || [] }; // Se não houver confrontos, retorna uma lista vazia
+      });
+
+      res.status(200).json({ torneios: resultado });
+    })
+    .catch((err) => {
+      console.error('Erro ao buscar confrontos dos torneios:', err);
+      res.status(500).json({ message: 'Erro interno do servidor ao buscar confrontos dos torneios', error: err });
+    });
+});
+
+
+
+
 //---------------------------------------------------------------------------
 
 // Rota para criar um novo aluno
